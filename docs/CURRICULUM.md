@@ -24,7 +24,7 @@
 | 0 | 認識資料庫與本課程 | ✅ | 3 | 3 | 表、欄、列、主鍵、外鍵；SQL 與各資料庫的關係 |
 | 1 | 查詢基礎：SELECT 與 WHERE | ✅ | 4 | 14 | 選欄位、計算欄位、整數除法、AND/OR 優先順序、NULL 三值邏輯、排序、DISTINCT |
 | 2 | 彙總分析：GROUP BY 與 HAVING | ✅ | 3 | 11 | COUNT 三種寫法、GROUP BY 鐵則、HAVING、執行順序、比率要先加總再相除 |
-| 3 | 多表關聯：JOIN | 🚧 | 4 | 10 | INNER / LEFT JOIN、找缺漏資料、JOIN 造成重複計算、UNION |
+| 3 | 多表關聯：JOIN | ✅ | 4 | 10 | INNER / LEFT JOIN、找缺漏資料、JOIN 造成重複計算、UNION |
 | 4 | 資料清理：CASE、NULL、字串與日期 | 🚧 | 4 | 10 | CASE 分級、COALESCE / NULLIF、TRIM / LOWER / REPLACE、strftime 與日期區間 |
 | 5 | 子查詢與 CTE | 🚧 | 4 | 8 | 子查詢、EXISTS、WITH 多步驟拆解、可讀性 |
 | 6 | 視窗函數 | 🚧 | 4 | 10 | ROW_NUMBER / RANK、PARTITION BY、LAG / LEAD、累計與移動平均 |
@@ -60,11 +60,19 @@
 | 2-2 GROUP BY | 樞紐分析表思維、**GROUP BY 鐵則**、按月份分組、多欄分組 | 各通路業績（1）、月營收趨勢（2）、各分類商品（1）、通路×狀態分佈（2） |
 | 2-3 HAVING 與執行順序 | WHERE vs HAVING、**SQL 執行順序**、**比率先加總再相除** | 忠實顧客名單（2）、高花費活動 CPC（3）、折扣碼成效（2） |
 
+### 單元 3：多表關聯 JOIN
+
+| 課 | 學習目標 | 練習（難度） |
+|---|---|---|
+| 3-1 INNER JOIN | JOIN 與 ON、別名與欄位前綴、JOIN 後檢查列數 | 6 月成交訂單與會員（1）、各城市成交營收（2）、廣告活動花費排行（2） |
+| 3-2 LEFT JOIN | 保留左表、anti-join 找缺漏、**條件放 ON 還是 WHERE**、LEFT JOIN 後 COUNT(右表主鍵) | 從未下單的會員（1）、沒有成交過的會員（3）、新會員成交次數含 0（3） |
+| 3-3 多表 JOIN 與重複計算 | 串三張表、**一對多讓金額重複計算**、金額屬於哪一層、COUNT(DISTINCT) | 各分類成交營收（2）、修正偏高的營收報表（3） |
+| 3-4 UNION | JOIN 橫向 vs UNION 縱向、UNION 與 UNION ALL、分段報表標籤欄 | 再行銷名單不重複（2）、B2B 與 B2C 營收對照（2） |
+
 ## 規劃中單元：預定練習主題
 
 | 單元 | 預定情境題 |
 |---|---|
-| 3 JOIN | 訂單接會員城市、商品銷售排行（order_items × products）、從未購買的會員、JOIN 後營收被重複計算的除錯題 |
 | 4 資料清理 | 會員分級（CASE）、退款率、統一「台北市 / 臺北市」、清理 email 空白與大小寫、週報（strftime） |
 | 5 CTE | 先算每人消費再分群、高於平均的會員、多步驟營收拆解 |
 | 6 視窗函數 | 每位會員第一筆訂單、月增率（LAG）、各分類銷售前 3 名、7 日移動平均 |

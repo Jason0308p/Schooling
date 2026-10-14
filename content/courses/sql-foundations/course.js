@@ -46,9 +46,9 @@ export const course = {
       load: () => import('./units/u02-aggregate/unit.js'),
     },
     {
-      id: 'u03', no: 3, title: '多表關聯：JOIN', status: 'coming_soon', access: 'free', plannedExercises: 10,
+      id: 'u03', no: 3, title: '多表關聯：JOIN', status: 'published', access: 'free', plannedExercises: 10,
       summary: '把訂單接上會員和商品，找出從未購買的會員，理解 JOIN 會讓資料「變多」的陷阱。',
-      outline: ['INNER JOIN 與資料表別名', 'LEFT JOIN 與找出缺漏資料', '多表 JOIN 與 JOIN 後重複計算的陷阱', 'UNION / UNION ALL'],
+      load: () => import('./units/u03-join/unit.js'),
     },
     {
       id: 'u04', no: 4, title: '資料清理：CASE、NULL、字串與日期', status: 'coming_soon', access: 'free', plannedExercises: 10,

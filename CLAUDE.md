@@ -36,8 +36,8 @@
 
 ## 目前進度
 
-- 已開放：單元 0～2（10 課、28 題），驗證全過。
-- 下一步：單元 3 JOIN（大綱在 `content/courses/sql-foundations/course.js` 的 outline 與 `docs/CURRICULUM.md`）。
+- 已開放：單元 0～3（14 課、38 題），驗證全過。
+- 下一步：單元 4 資料清理（大綱在 `content/courses/sql-foundations/course.js` 的 outline 與 `docs/CURRICULUM.md`）。
 - 之後：AI 新聞功能（尚未決定：放哪、是否用 AI 摘要、是否放廣告）。
 
 ## 常用指令
