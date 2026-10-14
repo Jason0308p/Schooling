@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>SQL 實戰營｜從零到能接分析需求的 SQL 課程</title>
+  <meta name="description" content="互動式 SQL 線上課程：瀏覽器內真實資料庫、電商與行銷分析情境題、自動批改與解說。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b6b62'/%3E%3Ctext x='16' y='21' font-family='Arial' font-weight='700' font-size='11' fill='white' text-anchor='middle'%3ESQL%3C/text%3E%3C/svg%3E">
+
+  <!-- 第三方（全部放在本地 src/vendor，離線可用；授權見各資料夾 LICENSE） -->
+  <link rel="stylesheet" href="src/vendor/codemirror/codemirror.css">
+  <link rel="stylesheet" href="src/vendor/codemirror/show-hint.css">
+  <script src="src/vendor/codemirror/codemirror.js"></script>
+  <script src="src/vendor/codemirror/mode-sql.js"></script>
+  <script src="src/vendor/codemirror/matchbrackets.js"></script>
+  <script src="src/vendor/codemirror/closebrackets.js"></script>
+  <script src="src/vendor/codemirror/placeholder.js"></script>
+  <script src="src/vendor/codemirror/show-hint.js"></script>
+  <script src="src/vendor/codemirror/sql-hint.js"></script>
+  <script src="src/vendor/codemirror/runmode.js"></script>
+  <script src="src/vendor/sqljs/sql-wasm.js"></script>
+
+  <!-- 樣式：tokens（設計變數）→ base（基礎）→ components（元件）→ views（各頁面） -->
+  <link rel="stylesheet" href="src/styles/tokens.css">
+  <link rel="stylesheet" href="src/styles/base.css">
+  <link rel="stylesheet" href="src/styles/components.css">
+  <link rel="stylesheet" href="src/styles/views.css">
+</head>
+<body>
+  <div id="app">
+    <div class="boot">
+      <div class="brand-mark">SQL</div>
+      <p id="boot-status">正在啟動資料庫…</p>
+    </div>
+  </div>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

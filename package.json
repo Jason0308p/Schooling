@@ -1,0 +1,11 @@
+{
+  "name": "sql-te",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "SQL 實戰營：瀏覽器內執行的互動式 SQL 課程（純靜態網站，無需後端）",
+  "scripts": {
+    "validate": "node tools/validate-content.mjs",
+    "serve": "python tools/serve.py 8090"
+  }
+}

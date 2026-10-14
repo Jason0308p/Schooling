@@ -1,0 +1,131 @@
+/* =========================================================
+   設計變數（Design Tokens）
+   換品牌色 / 字體只改這個檔。深色模式只覆寫顏色變數。
+   ========================================================= */
+:root {
+  color-scheme: light;
+
+  /* 底色與文字 */
+  --bg: #f7f6f2;
+  --surface: #ffffff;
+  --surface-2: #f2f0ea;
+  --ink: #1b1f24;
+  --ink-2: #3f4650;
+  --muted: #69707b;
+  --line: #e4e1d8;
+  --line-2: #d3cfc3;
+
+  /* 品牌 */
+  --brand: #0b6b62;
+  --brand-strong: #07524b;
+  --brand-ink: #ffffff;
+  --brand-soft: #e2f0ed;
+  --accent: #c2570c;
+  --accent-soft: #fcefe3;
+  --link: #1d5fd1;
+
+  /* 狀態 */
+  --ok: #157a3c;
+  --ok-soft: #e6f4eb;
+  --err: #b42318;
+  --err-soft: #fdecea;
+  --warn: #9a5a06;
+  --warn-soft: #fcf2df;
+  --info: #1d5fd1;
+  --info-soft: #e9f0fc;
+
+  /* 程式碼（深色編輯器，兩種主題都用深色） */
+  --code-bg: #1c2230;
+  --code-bg-2: #232a3a;
+  --code-ink: #e4e8ef;
+  --code-muted: #7d889c;
+  --code-line: #2e3648;
+
+  /* 字體 */
+  --font-sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", "Fira Code", Consolas, "Noto Sans Mono CJK TC", monospace;
+
+  /* 字級（基準 16px） */
+  --fs-xs: 0.8125rem;   /* 13px：輔助標籤 */
+  --fs-sm: 0.875rem;    /* 14px：表格、次要文字 */
+  --fs-base: 1rem;      /* 16px：內文 */
+  --fs-md: 1.125rem;    /* 18px */
+  --fs-lg: 1.5rem;      /* 24px：h2 */
+  --fs-xl: 2rem;        /* 32px：h1 */
+  --fs-2xl: 2.75rem;    /* 44px：首頁主標 */
+
+  /* 形狀 */
+  --radius: 14px;
+  --radius-sm: 9px;
+  --shadow: 0 1px 2px rgba(30, 28, 20, 0.05), 0 6px 20px rgba(30, 28, 20, 0.05);
+  --shadow-lg: 0 10px 40px rgba(30, 28, 20, 0.14);
+  --topbar-h: 60px;
+  --sidebar-w: 300px;
+  --gutter: 20px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121519;
+  --surface: #1a1e25;
+  --surface-2: #222730;
+  --ink: #e8eaed;
+  --ink-2: #c5cad1;
+  --muted: #9aa2ad;
+  --line: #2d333d;
+  --line-2: #3a414d;
+  --brand: #3db5a5;
+  --brand-strong: #5fcbbb;
+  --brand-ink: #06201d;
+  --brand-soft: #14332f;
+  --accent: #f0904a;
+  --accent-soft: #3a2414;
+  --link: #82b2ff;
+  --ok: #5fd38b;
+  --ok-soft: #14301f;
+  --err: #ff8f85;
+  --err-soft: #3b1815;
+  --warn: #f2b357;
+  --warn-soft: #3a2a10;
+  --info: #82b2ff;
+  --info-soft: #172741;
+  --code-bg: #0f131a;
+  --code-bg-2: #171c26;
+  --code-line: #262d3a;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121519;
+    --surface: #1a1e25;
+    --surface-2: #222730;
+    --ink: #e8eaed;
+    --ink-2: #c5cad1;
+    --muted: #9aa2ad;
+    --line: #2d333d;
+    --line-2: #3a414d;
+    --brand: #3db5a5;
+    --brand-strong: #5fcbbb;
+    --brand-ink: #06201d;
+    --brand-soft: #14332f;
+    --accent: #f0904a;
+    --accent-soft: #3a2414;
+    --link: #82b2ff;
+    --ok: #5fd38b;
+    --ok-soft: #14301f;
+    --err: #ff8f85;
+    --err-soft: #3b1815;
+    --warn: #f2b357;
+    --warn-soft: #3a2a10;
+    --info: #82b2ff;
+    --info-soft: #172741;
+    --code-bg: #0f131a;
+    --code-bg-2: #171c26;
+    --code-line: #262d3a;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.5);
+  }
+}
