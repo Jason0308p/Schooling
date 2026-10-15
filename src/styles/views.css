@@ -26,6 +26,20 @@
 .hero-points { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 8px; color: var(--ink-2); font-size: 0.9375rem; }
 .hero-points li { display: flex; gap: 8px; align-items: center; }
 .hero-points .icon { color: var(--ok); }
+
+/* 首頁 Hero 右側：課程預覽卡片 */
+.hero-courses { display: flex; align-items: flex-start; }
+.course-preview-grid { display: grid; gap: 12px; width: 100%; }
+.course-preview-card {
+  display: grid; gap: 4px; padding: 16px 18px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); text-decoration: none !important;
+  color: var(--ink); transition: border-color 0.15s, transform 0.1s;
+  box-shadow: var(--shadow);
+}
+.course-preview-card:hover { border-color: var(--brand); transform: translateY(-2px); }
+.course-preview-card strong { font-size: 1rem; font-weight: 700; }
+.course-preview-card p { margin: 0; font-size: var(--fs-sm); color: var(--muted); line-height: 1.4; }
 .demo-window { border-radius: var(--radius); overflow: hidden; background: var(--code-bg); box-shadow: var(--shadow-lg); border: 1px solid var(--code-line); }
 .demo-bar { display: flex; align-items: center; gap: 7px; padding: 11px 14px; background: var(--code-bg-2); border-bottom: 1px solid var(--code-line); }
 .demo-bar i { width: 11px; height: 11px; border-radius: 50%; background: #4a5368; }

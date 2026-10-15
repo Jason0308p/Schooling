@@ -4,9 +4,9 @@
  */
 export const config = {
   brand: {
-    name: 'SQL 實戰營',
-    tagline: '從零到能接分析需求的 SQL 實戰課',
-    logoMark: 'SQL',
+    name: 'Schooling',
+    tagline: '真實工作技能的互動學習平台',
+    logoMark: 'S',
   },
   appVersion: '0.1.0',
   storage: {
