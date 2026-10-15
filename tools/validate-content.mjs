@@ -56,11 +56,16 @@ for (const entry of catalog) {
   uniq(entry.id, `catalog`);
   if (!entry.load) continue;
   const { course } = await entry.load();
-  const { dataset } = await course.dataset();
-  const db = new SQL.Database();
-  dataset.build(db);
-  const snapshot = db.export();
-  db.close();
+
+  // 非 SQL 課程（dataset: null）—— 跳過資料庫初始化
+  let snapshot = null;
+  if (course.dataset) {
+    const { dataset } = await course.dataset();
+    const db = new SQL.Database();
+    dataset.build(db);
+    snapshot = db.export();
+    db.close();
+  }
 
   for (const u of course.units) {
     uniq(u.id, `course ${course.id}`);
@@ -78,6 +83,7 @@ for (const entry of catalog) {
       let md = '';
       try { md = await readFile(fileURLToPath(l.body), 'utf8'); } catch { err(where, `課文檔不存在：${l.body}`); }
       extractRunnable(md).forEach((sql, i) => {
+        if (!snapshot) return; // 非 SQL 課程跳過
         exampleCount++;
         const r = run(snapshot, sql);
         if (!r.ok) err(`${where} 範例 #${i + 1}`, r.error);
@@ -87,6 +93,17 @@ for (const entry of catalog) {
         exerciseCount++; unitEx++;
         const w = `${where} ${ex.id}`;
         uniq(ex.id, w);
+
+        // MCQ 選擇題：驗證特定欄位，不跑 SQL
+        if (ex.type === 'mcq') {
+          for (const f of ['question', 'options', 'explanation']) if (!ex[f]) err(w, `缺少 ${f}`);
+          if (!Array.isArray(ex.options) || ex.options.length !== 4) err(w, 'MCQ options 必須是 4 個元素的陣列');
+          if (typeof ex.answer !== 'number' || ex.answer < 0 || ex.answer > 3) err(w, 'MCQ answer 必須是 0-3 的整數');
+          continue;
+        }
+
+        // SQL 題：需要 snapshot
+        if (!snapshot) { err(w, 'SQL 題目但課程沒有 dataset'); continue; }
         for (const f of ['title', 'prompt', 'answer', 'explanation']) if (!ex[f]) err(w, `缺少 ${f}`);
         if (![1, 2, 3].includes(ex.difficulty)) err(w, 'difficulty 必須是 1/2/3');
         const expected = run(snapshot, ex.answer);

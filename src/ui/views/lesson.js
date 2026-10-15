@@ -7,6 +7,7 @@ import { renderMarkdown } from '../../core/markdown.js';
 import { highlightBlocks } from '../components/sqlEditor.js';
 import { hydrateRunnables, stashRawSql } from '../components/runnableExample.js';
 import { exerciseCard } from '../components/exerciseCard.js';
+import { mcqCard } from '../components/mcqCard.js';
 
 const bodyCache = new Map();
 async function loadBody(url) {
@@ -57,7 +58,9 @@ export async function renderLesson(app, { courseId, lessonId }) {
       next && h('a', { class: 'btn btn-primary', href: `#/learn/${course.id}/${next.lesson.id}` }, '下一課', icon('right'))));
   };
 
-  const cards = exercises.map((ex, i) => exerciseCard(app, {
+  const cards = exercises.map((ex, i) => ex.type === 'mcq'
+    ? mcqCard(app, { courseId: course.id, exercise: ex, index: i, onSolved: () => { paintSidebar(); paintCompletion(); } })
+    : exerciseCard(app, {
     course, exercise: ex, index: i,
     onSolved: () => { paintSidebar(); paintCompletion(); },
   }));

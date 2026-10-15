@@ -238,3 +238,20 @@ li.CodeMirror-hint-active { background: var(--brand); color: var(--brand-ink); }
 .wrong-ex-lesson { font-size: var(--fs-sm); color: var(--muted); min-width: 120px; }
 .wrong-ex-title { flex: 1; font-weight: 600; }
 .wrong-ex-attempts { font-size: var(--fs-sm); color: var(--warn); min-width: 60px; text-align: right; }
+
+/* ---------- MCQ 選擇題 ---------- */
+.mcq-question { margin: 12px 0 18px; }
+.mcq-options { display: grid; gap: 8px; }
+.mcq-option {
+  display: block; width: 100%; text-align: left;
+  padding: 12px 16px; border-radius: var(--radius-sm);
+  border: 2px solid var(--line); background: var(--surface);
+  color: var(--ink); font-size: 1rem; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.mcq-option:hover:not(:disabled) { border-color: var(--brand); background: var(--brand-soft); }
+.mcq-option:disabled { cursor: default; }
+.mcq-option.mcq-correct { border-color: var(--ok); background: var(--ok-soft); color: var(--ok); font-weight: 700; }
+.mcq-option.mcq-wrong { border-color: var(--err); background: var(--err-soft); color: var(--err); }
+.mcq-feedback { margin-top: 16px; padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid transparent; }
+.badge-soft { background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
