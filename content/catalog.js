@@ -16,13 +16,15 @@ export const catalog = [
     title: 'BigQuery × GA4：用 SQL 分析網站行為',
     level: '進階',
     tags: ['BigQuery', 'GA4', 'UNNEST'],
-    blurb: '學完主課程後的延伸：GA4 匯出資料的巢狀結構、UNNEST event_params、工作階段歸因。',
+    blurb: '學完主課程後的延伸：GA4 事件模型、核心指標、轉換漏斗、UTM 歸因分析，附 BigQuery 對應寫法。',
+    load: () => import('./courses/bigquery-ga4/course.js'),
   },
   {
     id: 'sql-interview',
     title: 'SQL 面試題庫：數據分析師 / Growth 職缺',
     level: '進階',
     tags: ['面試', '題庫'],
-    blurb: '依真實面試考法整理的計時題組，含常見追問。',
+    blurb: '模擬真實面試情境，分初級、中級、高難三組。面試題答對要從需求拆解起，訓練真實場景意識。',
+    load: () => import('./courses/sql-interview/course.js'),
   },
 ];

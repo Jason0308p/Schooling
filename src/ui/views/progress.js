@@ -17,6 +17,17 @@ export async function renderProgress(app) {
     h('button', { class: 'btn btn-danger btn-sm', type: 'button', onclick: () => { app.progress.reset(); toast('進度已清除'); location.reload(); } }, '確定清除'),
     h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => { resetConfirm.hidden = true; } }, '取消'));
 
+  // 錯題複習：有嘗試但未完成
+  const wrongExs = [];
+  course.flat.forEach(({ lesson }) => {
+    (lesson.exercises || []).forEach(ex => {
+      const state = app.progress.ex(ex.id);
+      if (state?.attempts > 0 && state.status !== 'solved') {
+        wrongExs.push({ lesson, ex, attempts: state.attempts });
+      }
+    });
+  });
+
   return h('div', { class: 'page page-progress' },
     h('header', { class: 'page-head' }, h('div', {}, h('h1', {}, '我的學習進度'), h('p', { class: 'muted' }, course.title))),
     h('section', { class: 'kpi-grid' },
@@ -37,6 +48,19 @@ export async function renderProgress(app) {
           h('span', { class: 'bar' }, h('i', { style: `width:${s.pct}%` })),
           h('span', { class: 'num' }, `${s.solved}/${s.total}`));
       }))),
+    h('section', { class: 'section' },
+      h('h2', { class: 'section-title' }, icon('bulb'), ' 待複習題目'),
+      wrongExs.length === 0
+        ? h('div', { class: 'card' }, h('p', { class: 'muted', style: 'padding:20px' }, '目前沒有待複習的題目 👏'))
+        : h('div', { class: 'card' },
+            h('p', { class: 'muted', style: 'padding:16px 20px 0' }, `共 ${wrongExs.length} 題待複習`),
+            h('div', { class: 'wrong-ex-list' }, wrongExs.map(({ lesson, ex, attempts }) =>
+              h('div', { class: 'wrong-ex-item' },
+                h('span', { class: 'wrong-ex-lesson' }, lesson.title),
+                h('span', { class: 'wrong-ex-title' }, ex.title),
+                h('span', { class: 'wrong-ex-attempts' }, `${attempts} 次`),
+                h('a', { class: 'btn btn-secondary btn-sm',
+                  href: `#/learn/${course.id}/${lesson.id}#${ex.id}` }, '前往作答')))))),
     h('section', { class: 'section' },
       h('h2', { class: 'section-title' }, '備份與還原'),
       h('div', { class: 'card stack' },

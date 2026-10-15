@@ -230,3 +230,11 @@ li.CodeMirror-hint-active { background: var(--brand); color: var(--brand-ink); }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 .toast-ok { background: var(--ok); color: #fff; }
 .toast-error { background: var(--err); color: #fff; }
+
+/* ---------- 錯題複習 ---------- */
+.wrong-ex-list { padding: 0 20px; }
+.wrong-ex-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.wrong-ex-item:last-child { border-bottom: 0; }
+.wrong-ex-lesson { font-size: var(--fs-sm); color: var(--muted); min-width: 120px; }
+.wrong-ex-title { flex: 1; font-weight: 600; }
+.wrong-ex-attempts { font-size: var(--fs-sm); color: var(--warn); min-width: 60px; text-align: right; }
