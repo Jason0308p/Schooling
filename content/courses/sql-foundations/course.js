@@ -66,19 +66,19 @@ export const course = {
       load: () => import('./units/u06-window/unit.js'),
     },
     {
-      id: 'u07', no: 7, title: '行銷分析實戰', status: 'coming_soon', access: 'free', plannedExercises: 12,
+      id: 'u07', no: 7, title: '行銷分析實戰', status: 'published', access: 'free', plannedExercises: 12,
       summary: '把前面學的組合起來，做出 Growth / MarTech 團隊每週在看的報表。',
-      outline: ['轉換漏斗（view_item → purchase）', 'Cohort 留存與回購率', 'RFM 客戶分群', '廣告成效：CTR、CPC、ROAS', '新客 vs 舊客營收拆解'],
+      load: () => import('./units/u07-marketing/unit.js'),
     },
     {
-      id: 'u08', no: 8, title: '寫入資料與資料表設計', status: 'coming_soon', access: 'free', plannedExercises: 6,
+      id: 'u08', no: 8, title: '寫入資料與資料表設計', status: 'published', access: 'free', plannedExercises: 6,
       summary: '知道怎麼安全地改資料，看得懂資料表設計，跟工程師溝通不卡關。',
-      outline: ['INSERT / UPDATE / DELETE 與 WHERE 的重要性', 'CREATE TABLE、主鍵、外鍵、限制', 'Transaction 交易', '索引與查詢效能入門'],
+      load: () => import('./units/u08-write/unit.js'),
     },
     {
-      id: 'u09', no: 9, title: '綜合案例：主管丟需求給你', status: 'coming_soon', access: 'free', plannedExercises: 8,
+      id: 'u09', no: 9, title: '綜合案例：主管丟需求給你', status: 'published', access: 'free', plannedExercises: 8,
       summary: '沒有提示的開放題：從模糊需求拆解、寫查詢、驗證數字、寫結論。',
-      outline: ['上個月營收為什麼掉了？', '雙 11 活動成效檢討', '哪些會員值得做再行銷？', 'GA4 與後台訂單數字對不起來怎麼辦'],
+      load: () => import('./units/u09-capstone/unit.js'),
     },
   ],
 };
