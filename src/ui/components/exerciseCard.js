@@ -85,6 +85,8 @@ export function exerciseCard(app, { course, exercise: ex, index, onSolved }) {
         h('div', { class: 'feedback-body muted' }, '建議打開「看解答」，比較標準寫法和其他解法。')));
       if (actual.ok) output.append(resultView(actual, { title: '你的結果' }));
       toast('答對了！進度已儲存');
+      card.classList.add('is-solved-flash');
+      card.addEventListener('animationend', () => card.classList.remove('is-solved-flash'), { once: true });
       onSolved && onSolved();
       return;
     }
@@ -94,7 +96,15 @@ export function exerciseCard(app, { course, exercise: ex, index, onSolved }) {
       return;
     }
     output.append(h('div', { class: 'feedback feedback-fail', role: 'alert' },
-      h('div', { class: 'feedback-title' }, '還不對，再試試看'),
+      h('div', { class: 'feedback-title' }, '還不對，再試試看',
+        g.code && g.code !== 'error' && h('span', { class: 'feedback-type-badge' }, {
+          wrong_columns: '欄位錯',
+          wrong_rows: '筆數錯',
+          wrong_values: '數值錯',
+          wrong_order: '排序錯',
+          column_order: '欄位順序',
+          rule_fail: '寫法限制',
+        }[g.code] || g.code)),
       h('div', { class: 'feedback-body' }, g.message),
       g.detail?.expectedColumns && h('div', { class: 'feedback-body' },
         '預期的欄位依序是：', h('code', {}, g.detail.expectedColumns.join(', '))),

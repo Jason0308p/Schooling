@@ -29,7 +29,14 @@ export async function renderLesson(app, { courseId, lessonId }) {
   const paintSidebar = () => sidebar.replaceChildren(...sidebarContent(app, course, lesson.id));
   paintSidebar();
 
-  const article = h('article', { class: 'prose lesson-article' }, h('div', { class: 'skeleton' }, '載入課文中…'));
+  const article = h('article', { class: 'prose lesson-article' },
+    h('div', { class: 'skeleton' },
+      h('div', { class: 'skeleton-block skeleton-title' }),
+      h('div', { class: 'skeleton-block skeleton-line wide' }),
+      h('div', { class: 'skeleton-block skeleton-line wide' }),
+      h('div', { class: 'skeleton-block skeleton-line mid' }),
+      h('div', { class: 'skeleton-block skeleton-line wide' }, ''),
+      h('div', { class: 'skeleton-block skeleton-line narrow' })));
   const exercises = lesson.exercises || [];
   const completion = h('div', { class: 'completion' });
 
@@ -65,6 +72,15 @@ export async function renderLesson(app, { courseId, lessonId }) {
     h('div', { class: 'sidebar-scrim', onclick: () => document.body.classList.remove('sidebar-open') }),
     h('div', { class: 'lesson-main' },
       sidebarToggle,
+      (() => {
+        const s = unitStats(course, unit, app.progress);
+        const fill = h('div', { class: 'lesson-progress-bar-fill', style: `width:${s.pct}%` });
+        app.progress.onChange(() => {
+          const s2 = unitStats(course, unit, app.progress);
+          fill.style.width = `${s2.pct}%`;
+        });
+        return h('div', { class: 'lesson-progress-bar', title: `本單元完成 ${s.pct}%` }, fill);
+      })(),
       h('nav', { class: 'breadcrumb', 'aria-label': '位置' },
         h('a', { href: `#/course/${course.id}` }, course.title), h('span', {}, '/'),
         h('span', {}, `${unitLabel} ${unit.title}`)),

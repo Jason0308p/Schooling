@@ -51,19 +51,19 @@ export const course = {
       load: () => import('./units/u03-join/unit.js'),
     },
     {
-      id: 'u04', no: 4, title: '資料清理：CASE、NULL、字串與日期', status: 'coming_soon', access: 'free', plannedExercises: 10,
+      id: 'u04', no: 4, title: '資料清理：CASE、NULL、字串與日期', status: 'published', access: 'free', plannedExercises: 13,
       summary: '處理真實世界的髒資料：空值、大小寫、寫法不一致，以及按日 / 週 / 月彙總。',
-      outline: ['CASE WHEN 分類與分級', 'NULL 處理：COALESCE、NULLIF、除以零', '字串函數：TRIM、LOWER、REPLACE、SUBSTR', '日期函數：strftime、date、日期區間'],
+      load: () => import('./units/u04-cleaning/unit.js'),
     },
     {
-      id: 'u05', no: 5, title: '子查詢與 CTE', status: 'coming_soon', access: 'free', plannedExercises: 8,
+      id: 'u05', no: 5, title: '子查詢與 CTE', status: 'published', access: 'free', plannedExercises: 8,
       summary: '用 WITH 把複雜問題拆成一步一步，寫出別人看得懂、自己改得動的 SQL。',
-      outline: ['WHERE / FROM 裡的子查詢', 'EXISTS 與 NOT EXISTS', 'WITH（CTE）多步驟拆解', '可讀性：命名、縮排、註解'],
+      load: () => import('./units/u05-cte/unit.js'),
     },
     {
-      id: 'u06', no: 6, title: '視窗函數', status: 'coming_soon', access: 'free', plannedExercises: 10,
+      id: 'u06', no: 6, title: '視窗函數', status: 'published', access: 'free', plannedExercises: 11,
       summary: '不用把資料壓扁也能排名、算累計、比較前一期 —— 分析師面試的必考題。',
-      outline: ['ROW_NUMBER / RANK / DENSE_RANK', 'PARTITION BY 分組排名', 'LAG / LEAD：環比與間隔天數', '累計加總與移動平均'],
+      load: () => import('./units/u06-window/unit.js'),
     },
     {
       id: 'u07', no: 7, title: '行銷分析實戰', status: 'coming_soon', access: 'free', plannedExercises: 12,

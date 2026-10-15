@@ -12,15 +12,20 @@ export function hydrateRunnables(root, app, dataset) {
     const pre = box.querySelector('pre');
     const sql = pre.dataset.raw || pre.textContent;
     const out = h('div', { class: 'runnable-out' });
+    const runBtn = h('button', { class: 'btn btn-secondary btn-sm', type: 'button', onclick: () => {
+        clear(out).append(resultView(runIsolated(dataset, sql), { maxRows: 50 }));
+      } }, icon('play'), h('span', {}, '執行'));
     const bar = h('div', { class: 'runnable-bar' },
       h('span', { class: 'runnable-label' }, '範例'),
       h('span', { class: 'spacer' }),
       h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => app.openInPlayground(sql) }, '在練習場修改'),
-      h('button', { class: 'btn btn-secondary btn-sm', type: 'button', onclick: () => {
-        clear(out).append(resultView(runIsolated(dataset, sql), { maxRows: 50 }));
-      } }, icon('play'), h('span', {}, '執行')));
+      runBtn);
     box.prepend(bar);
     box.append(out);
+    box.setAttribute('tabindex', '-1');
+    box.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); runBtn.click(); }
+    });
   });
 }
 
