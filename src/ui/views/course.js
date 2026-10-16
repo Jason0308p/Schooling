@@ -1,7 +1,7 @@
 /**
  * 課程總覽頁：課程介紹、進度、4 週學習計畫、完整大綱。
  */
-import { h, icon } from '../dom.js';
+import { h, icon, toast } from '../dom.js';
 import { courseStats, unitStats, nextLesson } from '../../core/courseRegistry.js';
 
 export async function renderCourse(app, { courseId }) {
@@ -56,7 +56,21 @@ export async function renderCourse(app, { courseId }) {
       h('section', { class: 'section' },
         h('h2', { class: 'section-title' }, '適合誰'),
         h('ul', { class: 'check-list' }, course.audience.map((o) => h('li', {}, icon('user'), h('span', {}, o)))),
-        h('p', { class: 'muted' }, '練習資料：', h('a', { href: '#/data' }, course.dataset.name), '，' + course.dataset.description))));
+        h('p', { class: 'muted' }, '練習資料：', h('a', { href: '#/data' }, course.dataset.name), '，' + course.dataset.description)),
+
+      stats.pct === 100 && h('section', { class: 'section' },
+        h('div', { class: 'certificate card', id: 'certificate' },
+          h('div', { class: 'cert-badge' }, icon('check')),
+          h('p', { class: 'cert-label' }, '結業證書'),
+          h('h2', { class: 'cert-title' }, course.title),
+          h('p', { class: 'cert-desc' }, `恭喜你完成了全部 ${stats.exTotal} 道練習題！`),
+          h('p', { class: 'cert-date' }, `完成日期：${new Date().toLocaleDateString('zh-TW')}`),
+          h('div', { class: 'cert-actions' },
+            h('button', { class: 'btn btn-primary', onclick: () => window.print() }, '列印 / 存成 PDF'),
+            h('button', { class: 'btn btn-secondary', onclick: () => {
+              navigator.share ? navigator.share({ title: '我完成了 ' + course.title, url: location.href })
+                : navigator.clipboard.writeText(location.href).then(() => toast('連結已複製'));
+            }}, '分享'))))));
 }
 
 function unitBlock(app, course, u) {
