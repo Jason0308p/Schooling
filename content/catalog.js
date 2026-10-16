@@ -44,6 +44,22 @@ export const catalog = [
     load: () => import('./courses/pm-sql/course.js'),
   },
   {
+    id: 'excel-to-sql',
+    title: 'Excel → SQL：報表人的 SQL 入門',
+    level: '入門',
+    tags: ['Excel', 'SQL', '入門', '轉換'],
+    blurb: '已經會 VLOOKUP 和樞紐分析表？30 分鐘把你會的 Excel 操作翻譯成 SQL。',
+    load: () => import('./courses/excel-to-sql/course.js'),
+  },
+  {
+    id: 'growth-analytics',
+    title: 'Growth Analytics：用數據找增長機會',
+    level: '進階',
+    tags: ['Growth', 'AARRR', 'Retention', 'A/B Test'],
+    blurb: '用 AARRR 框架拆解增長——獲客、啟動、留存、營收、推薦，每個環節都有 SQL 查詢。',
+    load: () => import('./courses/growth-analytics/course.js'),
+  },
+  {
     id: 'prd-writing',
     title: 'PRD 寫作課：從需求到可執行的產品文件',
     level: '實務',
