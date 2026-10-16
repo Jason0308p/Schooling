@@ -15,7 +15,7 @@ export async function loadCourse(courseId) {
   const entry = catalog.find((c) => c.id === courseId && c.load);
   if (!entry) return null;
   const { course } = await entry.load();
-  const { dataset } = await course.dataset();
+  const dataset = course.dataset ? (await course.dataset()).dataset : null;
 
   const units = [];
   for (const u of course.units) {
