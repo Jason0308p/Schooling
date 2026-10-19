@@ -60,11 +60,27 @@ export const catalog = [
     load: () => import('./courses/growth-analytics/course.js'),
   },
   {
+    id: 'ai-workflow',
+    title: 'AI 工作術：行銷與 PM 的 AI 工具實戰',
+    level: '實務',
+    tags: ['AI', 'ChatGPT', 'Claude', '行銷', 'PM'],
+    blurb: '不用寫一行程式碼，用 AI 工具提升文案、報告、SEO 和廣告素材的效率。',
+    load: () => import('./courses/ai-workflow/course.js'),
+  },
+  {
     id: 'prd-writing',
     title: 'PRD 寫作課：從需求到可執行的產品文件',
     level: '實務',
     tags: ['PRD', 'Product', 'User Story', 'PM'],
     blurb: '學會寫工程師和設計師都能執行的需求文件，從 User Story 到驗收標準。',
     load: () => import('./courses/prd-writing/course.js'),
+  },
+  {
+    id: 'prompt-engineering',
+    title: 'Prompt Engineering 中文實戰：讓 AI 輸出一致結果',
+    level: '實務',
+    tags: ['Prompt', 'AI', 'ChatGPT', 'Claude'],
+    blurb: '四個維度寫出可預期的 Prompt—Role/Task/Format/Context—附行銷、PM、分析師的實用模板庫。',
+    load: () => import('./courses/prompt-engineering/course.js'),
   },
 ];

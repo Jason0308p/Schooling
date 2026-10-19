@@ -15,6 +15,8 @@ export function renderShell(app) {
 
   const nav = [
     ['home', '#/', '所有課程'],
+    ['playground', '#/playground', '練習場'],
+    ['data', '#/data', '資料表'],
     ['progress', '#/progress', '我的進度'],
   ];
 
