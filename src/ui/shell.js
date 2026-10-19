@@ -14,9 +14,7 @@ export function renderShell(app) {
   paintStreak();
 
   const nav = [
-    ['course', `#/course/${app.config.defaultCourseId}`, '課程'],
-    ['playground', '#/playground', '練習場'],
-    ['data', '#/data', '資料表'],
+    ['home', '#/', '所有課程'],
     ['progress', '#/progress', '我的進度'],
   ];
 
@@ -29,7 +27,7 @@ export function renderShell(app) {
         nav.map(([key, href, label]) => h('a', { href, 'data-nav': key }, label))),
       h('div', { class: 'topbar-actions' },
         streak,
-        h('button', { class: 'icon-btn', type: 'button', title: '資料表參考', 'aria-label': '資料表參考', onclick: () => app.openSchema() }, icon('db')),
+        h('button', { class: 'icon-btn', type: 'button', title: '資料表參考', 'aria-label': '資料表參考', onclick: () => app.openSchema(), id: 'schema-btn' }, icon('db')),
         h('button', { class: 'icon-btn', type: 'button', title: '切換深色 / 淺色', 'aria-label': '切換深色 / 淺色', onclick: () => app.toggleTheme() }, icon('moon')))));
 
   const main = h('main', { id: 'view', tabindex: '-1' });

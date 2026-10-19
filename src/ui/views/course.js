@@ -41,13 +41,13 @@ export async function renderCourse(app, { courseId }) {
         h('h2', { class: 'section-title' }, '學完你會'),
         h('ul', { class: 'check-list' }, course.outcomes.map((o) => h('li', {}, icon('check'), h('span', {}, o))))),
 
-      h('section', { class: 'section' },
+      course.schedule?.length > 0 && h('section', { class: 'section' },
         h('h2', { class: 'section-title' }, '建議進度：4 週，每天約 1 小時'),
         h('div', { class: 'schedule' }, course.schedule.map((w) => h('div', { class: 'week card' },
           h('div', { class: 'week-no' }, `第 ${w.week} 週`),
           h('h3', {}, w.title),
           h('p', { class: 'muted' }, w.goal),
-          h('ul', {}, w.units.map((id) => h('li', {}, `${unitById[id].no}. ${unitById[id].title}`))))))),
+          h('ul', {}, w.units.map((id) => h('li', {}, `${unitById[id]?.no ?? ''} ${unitById[id]?.title ?? id}`))))))),
 
       h('section', { class: 'section' },
         h('h2', { class: 'section-title' }, '課程大綱'),
@@ -55,8 +55,8 @@ export async function renderCourse(app, { courseId }) {
 
       h('section', { class: 'section' },
         h('h2', { class: 'section-title' }, '適合誰'),
-        h('ul', { class: 'check-list' }, course.audience.map((o) => h('li', {}, icon('user'), h('span', {}, o)))),
-        h('p', { class: 'muted' }, '練習資料：', h('a', { href: '#/data' }, course.dataset.name), '，' + course.dataset.description)),
+        h('ul', { class: 'check-list' }, (course.audience || []).map((o) => h('li', {}, icon('user'), h('span', {}, o)))),
+        course.dataset && h('p', { class: 'muted' }, '練習資料：', h('a', { href: '#/data' }, course.dataset.name), '，' + course.dataset.description)),
 
       stats.pct === 100 && h('section', { class: 'section' },
         h('div', { class: 'certificate card', id: 'certificate' },

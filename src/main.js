@@ -48,7 +48,10 @@ async function boot() {
       if (c) ensureDataset(c.dataset);
       return c;
     },
-    openSchema: async () => openSchemaDrawer((await app.getCourse()).dataset),
+    openSchema: async () => {
+      const c = await app.getCourse();
+      if (c?.dataset) openSchemaDrawer(c.dataset);
+    },
     openInPlayground(sql) { pendingPlaygroundSql = sql; location.hash = '#/playground'; },
     takePlaygroundSql() { const s = pendingPlaygroundSql; pendingPlaygroundSql = null; return s; },
     toggleTheme() {
@@ -70,6 +73,13 @@ async function boot() {
     try {
       const view = await render(app, params);
       main.replaceChildren(view);
+      // 根據當前課程是否有 dataset 顯示/隱藏資料表按鈕
+      const courseId = params?.courseId;
+      const btn = document.getElementById('schema-btn');
+      if (btn) {
+        const c = courseId ? await loadCourse(courseId) : await app.getCourse();
+        btn.style.display = c?.dataset ? '' : 'none';
+      }
     } catch (e) {
       console.error(e);
       main.replaceChildren(h('div', { class: 'page' }, h('h1', {}, '頁面載入失敗'), h('pre', { class: 'code' }, String(e.stack || e))));
