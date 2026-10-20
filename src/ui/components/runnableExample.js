@@ -13,6 +13,7 @@ export function hydrateRunnables(root, app, dataset) {
     const sql = pre.dataset.raw || pre.textContent;
     const out = h('div', { class: 'runnable-out' });
     const runBtn = h('button', { class: 'btn btn-secondary btn-sm', type: 'button', onclick: () => {
+        if (!dataset) { clear(out).append(h('p', { class: 'muted' }, '此課程無資料集，無法執行 SQL。')); return; }
         clear(out).append(resultView(runIsolated(dataset, sql), { maxRows: 50 }));
       } }, icon('play'), h('span', {}, '執行'));
     const bar = h('div', { class: 'runnable-bar' },

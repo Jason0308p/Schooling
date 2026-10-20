@@ -48,8 +48,12 @@ export async function renderHome(app) {
               c.blurb && h('p', {}, c.blurb)))))),
 
     h('section', { class: 'stat-strip' },
-      [[totalCourses, '門課程'], [totalPlanned || 182, '道練習題'], [6, '種實務技能'], [0, '元費用']].map(([n, l]) =>
+      [[totalCourses, '門課程'], [250, '道練習題'], [10, '種實務技能'], [0, '元費用']].map(([n, l]) =>
         h('div', { class: 'stat' }, h('strong', {}, n), h('span', {}, l)))),
+
+    h('section', { class: 'section' },
+      h('h2', { class: 'section-title' }, '所有課程'),
+      catalogSection(catalog, sqlCourse, stats)),
 
     h('section', { class: 'section' },
       h('h2', { class: 'section-title' }, '為什麼選 Schooling'),
@@ -58,10 +62,6 @@ export async function renderHome(app) {
         feature('即時批改 + 解說', '答錯告訴你哪裡錯，答對建議看標準解法。學到能舉一反三，不是對答案。'),
         feature('多種課程，一個帳號', 'SQL、GA4、Looker Studio、PRD……工作裡用得到的技能，都在同一個地方學。'),
         feature('不用安裝任何東西', '瀏覽器開啟就能用。SQL 課連資料庫都在瀏覽器裡跑，真的執行、真的出結果。'))),
-
-    h('section', { class: 'section' },
-      h('h2', { class: 'section-title' }, '所有課程'),
-      h('div', { class: 'catalog-grid' }, catalog.map(c => catalogCard(c, c.id === sqlCourse.id ? stats : null)))),
 
     h('section', { class: 'section' },
       h('h2', { class: 'section-title' }, '每一課的學習方式'),
@@ -80,6 +80,41 @@ export async function renderHome(app) {
 
 const feature = (t, d) => h('div', { class: 'feature card' }, h('h3', {}, t), h('p', {}, d));
 const step = (t, d) => h('li', { class: 'step' }, h('strong', {}, t), h('span', {}, d));
+
+const FILTERS = [
+  { key: 'all',  label: '全部' },
+  { key: 'sql',  label: 'SQL 分析', match: c => c.tags?.some(t => ['SQL','BigQuery','GA4'].includes(t)) },
+  { key: 'ai',   label: 'AI 工具',  match: c => c.tags?.some(t => ['AI','Prompt','ChatGPT','Claude'].includes(t)) },
+  { key: 'pm',   label: 'PM 實務',  match: c => c.tags?.some(t => ['PM','PRD','Growth'].includes(t)) },
+];
+
+function catalogSection(catalog, sqlCourse, stats) {
+  let active = 'all';
+  const grid = h('div', { class: 'catalog-grid' });
+
+  const render = () => {
+    const f = FILTERS.find(f => f.key === active);
+    const list = f.match ? catalog.filter(c => c.load && f.match(c)) : catalog.filter(c => c.load);
+    grid.replaceChildren(...list.map(c => catalogCard(c, c.id === sqlCourse?.id ? stats : null)));
+  };
+
+  const tabs = h('div', { class: 'filter-tabs' },
+    ...FILTERS.map(f => {
+      const btn = h('button', {
+        class: `filter-tab${f.key === active ? ' is-active' : ''}`,
+        type: 'button',
+        onclick: () => {
+          active = f.key;
+          tabs.querySelectorAll('.filter-tab').forEach(b => b.classList.toggle('is-active', b === btn));
+          render();
+        },
+      }, f.label);
+      return btn;
+    }));
+
+  render();
+  return h('div', {}, tabs, grid);
+}
 
 function catalogCard(c, stats) {
   const available = !!c.load;

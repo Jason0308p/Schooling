@@ -255,3 +255,4 @@ li.CodeMirror-hint-active { background: var(--brand); color: var(--brand-ink); }
 .mcq-option.mcq-wrong { border-color: var(--err); background: var(--err-soft); color: var(--err); }
 .mcq-feedback { margin-top: 16px; padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid transparent; }
 .badge-soft { background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+.filter-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}.filter-tab{padding:6px 16px;border-radius:20px;border:1.5px solid var(--border);background:transparent;color:var(--ink-2);cursor:pointer;font-size:var(--fs-sm);font-weight:500;transition:all .15s}.filter-tab:hover{border-color:var(--brand);color:var(--brand)}.filter-tab.is-active{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
