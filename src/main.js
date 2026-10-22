@@ -45,7 +45,7 @@ async function boot() {
     progress: new ProgressStore(new LocalStorageAdapter(config.storage.progressKey)),
     async getCourse(id = config.defaultCourseId) {
       const c = await loadCourse(id);
-      if (c) ensureDataset(c.dataset);
+      if (c?.dataset) ensureDataset(c.dataset);
       return c;
     },
     openSchema: async () => {
