@@ -1,10 +1,11 @@
-﻿# SQL 實戰營
+﻿# Schooling
 
-互動式 SQL 線上課程。整個網站是**純靜態網頁**：資料庫（SQLite）直接在瀏覽器裡執行，不需要後端、不需要 Docker、不需要安裝資料庫。
+Schooling 是一個以真實工作情境為核心的免費互動學習平台。SQL 課程透過 sql.js 在瀏覽器內執行 SQLite，非 SQL 課程使用互動式選擇題；不需要後端、Docker 或外部資料庫。
 
-- 課程：SQL 實戰分析：從零到能接需求（10 單元，規劃 92 題；目前開放第 0～3 單元、14 課、38 題）
-- 練習資料：「好禮客製」模擬電商公司，8 張資料表，資料期間 2025-07-01 ～ 2026-06-30
-- 批改：比對**查詢結果**而不是比對 SQL 字串，答錯會告訴你錯在哪一類，並附解說
+- 線上網站：`https://schooling.jason0308p.workers.dev`
+- 目前規模：10 門課、90 課、250 題、179 個課文範例
+- 課程領域：SQL、GA4、Looker Studio、產品數據、PRD、AI 工作術與 Prompt Engineering
+- 學習功能：SQL 即時批改、MCQ 即時回饋、錯題複習、學習進度與完課證書
 
 ---
 
@@ -20,11 +21,11 @@
 ## 檔案在哪
 
 ```text
-SQL_te/
-├─ index.html            網站入口
-├─ start.bat             本機啟動（雙擊）
-├─ README.md             本文件
-├─ CLAUDE.md             給 AI 助手看的專案說明
+Schooling/
+├─ AGENTS.md             跨 Agent 共用規範
+├─ CLAUDE.md             Claude 專用的既有專案資料
+├─ index.html            網站入口與 SEO / OG 標籤
+├─ og-image.png          社群分享預覽圖
 ├─ package.json          npm 指令：npm run validate / npm run serve
 ├─ docs/                 詳細文件（見下表）
 ├─ src/                  網站程式
@@ -36,12 +37,8 @@ SQL_te/
 │  └─ vendor/            第三方套件（sql.js、CodeMirror，已下載到本地）
 ├─ content/              課程內容（跟程式完全分開）
 │  ├─ catalog.js         課程目錄
-│  ├─ courses/sql-foundations/
-│  │  ├─ course.js       課程設定：單元順序、學習計畫、大綱
-│  │  └─ units/u01-select/
-│  │     ├─ unit.js      這個單元的課與練習題
-│  │     └─ l01.md …     每一課的課文
-│  └─ datasets/ecommerce/index.js   練習資料庫的結構與產生邏輯
+│  ├─ courses/           10 門課程的設定、單元、課文與題目
+│  └─ datasets/          電商與 App 產品模擬資料集
 └─ tools/
    ├─ validate-content.mjs   內容驗證（新增/修改課程後必跑）
    └─ serve.py               本機伺服器（不快取）
@@ -51,7 +48,9 @@ SQL_te/
 
 | 文件 | 給誰看 | 內容 |
 |---|---|---|
-| [docs/CURRICULUM.md](docs/CURRICULUM.md) | 學員 / 課程規劃 | 完整課程大綱、學習進度、各單元目標 |
+| [AGENTS.md](AGENTS.md) | AI Agent | 跨模型共同規範、驗證要求與安全限制 |
+| [docs/AGENT_CHANGELOG.md](docs/AGENT_CHANGELOG.md) | 開發者 / AI Agent | 長期架構與流程決策紀錄 |
+| [docs/CURRICULUM.md](docs/CURRICULUM.md) | 學員 / 課程規劃 | 完整課程版圖與建議學習路徑 |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 開發者 | 系統架構、資料流、各模組職責、設計決策 |
 | [docs/CONTENT_GUIDE.md](docs/CONTENT_GUIDE.md) | 寫課程的人 | 怎麼新增課、題目、單元、課程，欄位規格 |
 | [docs/DATASET.md](docs/DATASET.md) | 寫課程的人 | 練習資料表說明、資料特性、刻意埋的髒資料 |

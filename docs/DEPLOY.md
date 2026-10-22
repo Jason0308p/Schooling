@@ -16,7 +16,9 @@
 }
 ```
 
-`dist` 是部署前臨時產生的，內容固定為：`index.html`、`_headers`、`src/`、`content/`（共 59 個檔案），已被 `.gitignore` 排除。
+`dist` 是部署前產生的完整靜態輸出，已被 `.gitignore` 排除。內容固定包含：`index.html`、`_headers`、`og-image.png`、`src/`、`content/`。
+
+每次部署都必須刪除並完整重建 `dist/`。禁止增量複製，否則舊檔案可能殘留並造成線上版本混合。
 
 ## A. 手動部署（Windows PowerShell）
 
@@ -30,7 +32,7 @@ npx wrangler whoami            # 看到你的 email 即成功
 # 2. 在專案根目錄建立 dist
 if (Test-Path dist) { Remove-Item dist -Recurse -Force }
 New-Item -ItemType Directory dist | Out-Null
-Copy-Item index.html, _headers dist
+Copy-Item index.html, _headers, og-image.png dist
 Copy-Item src, content dist -Recurse
 
 # 3. 部署
@@ -48,7 +50,7 @@ Cloudflare 後台 → Workers & Pages → `schooling` → 設定 → 建置 → 
 |---|---|
 | 生產分支 | `main` |
 | 根目錄 | 留空 |
-| 建置指令 | `mkdir dist && cp -r index.html src content _headers dist/` |
+| 建置指令 | `rm -rf dist && mkdir dist && cp -r index.html src content _headers og-image.png dist/` |
 | 部署指令 | `npx wrangler deploy` |
 
 連好之後：`git push` → 約 1 分鐘自動更新。選單名稱依 Cloudflare 當下介面為準，可能與此處略有不同。

@@ -41,7 +41,7 @@
 │   views/             一個路由一個檔案：home / course /     │
 │                      lesson / playground / data / progress │
 │   components/        可重用元件：sqlEditor / resultTable / │
-│                      exerciseCard / schemaDrawer /         │
+│                      exerciseCard / mcqCard / schemaDrawer /│
 │                      runnableExample                       │
 │   dom.js             h() 建立元素、icon、toast             │
 └───────────────▲──────────────────────────────────────────┘

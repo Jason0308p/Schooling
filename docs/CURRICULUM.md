@@ -1,8 +1,15 @@
-# 課程大綱：SQL 實戰分析：從零到能接需求
+# Schooling 課程版圖
 
-**目標學員**：零基礎，目標是數據分析、Growth、Marketing Ops、電商營運職缺。
-**結業程度**：拿到一個模糊的業務問題，能拆解成 SQL、寫出正確查詢、驗證數字並說明結論。
-**練習環境**：瀏覽器內 SQLite；每課標註 PostgreSQL / MySQL / BigQuery 的差異。
+Schooling 以「工作中能直接使用」為課程設計原則。目前共有 **10 門課、90 課、250 題、179 個課文範例**。
+
+## 建議學習路徑
+
+- **SQL 入門**：Excel → SQL → SQL 實戰分析 → SQL 面試題庫
+- **行銷分析**：SQL 實戰分析 → BigQuery × GA4 → Looker Studio → Growth Analytics
+- **PM 能力**：PM SQL → Growth Analytics → PRD 寫作 → AI 工作術
+- **AI 生產力**：AI 工作術 → Prompt Engineering 中文實戰
+
+## SQL 主課程：從零到能接需求
 
 ## 建議進度（4 週，每天約 1 小時）
 
@@ -17,7 +24,7 @@
 
 ## 單元總覽
 
-狀態：✅ 已開放　🚧 規劃中
+狀態：✅ 已開放（U0～U9 全部發布）
 
 | # | 單元 | 狀態 | 課 | 題 | 核心觀念 |
 |---|---|---|---|---|---|
@@ -25,13 +32,13 @@
 | 1 | 查詢基礎：SELECT 與 WHERE | ✅ | 4 | 14 | 選欄位、計算欄位、整數除法、AND/OR 優先順序、NULL 三值邏輯、排序、DISTINCT |
 | 2 | 彙總分析：GROUP BY 與 HAVING | ✅ | 3 | 11 | COUNT 三種寫法、GROUP BY 鐵則、HAVING、執行順序、比率要先加總再相除 |
 | 3 | 多表關聯：JOIN | ✅ | 4 | 10 | INNER / LEFT JOIN、找缺漏資料、JOIN 造成重複計算、UNION |
-| 4 | 資料清理：CASE、NULL、字串與日期 | 🚧 | 4 | 10 | CASE 分級、COALESCE / NULLIF、TRIM / LOWER / REPLACE、strftime 與日期區間 |
-| 5 | 子查詢與 CTE | 🚧 | 4 | 8 | 子查詢、EXISTS、WITH 多步驟拆解、可讀性 |
-| 6 | 視窗函數 | 🚧 | 4 | 10 | ROW_NUMBER / RANK、PARTITION BY、LAG / LEAD、累計與移動平均 |
-| 7 | 行銷分析實戰 | 🚧 | 5 | 12 | 漏斗、Cohort 留存、RFM、CTR / CPC / ROAS、新舊客拆解 |
-| 8 | 寫入資料與資料表設計 | 🚧 | 4 | 6 | INSERT / UPDATE / DELETE、CREATE TABLE、交易、索引 |
-| 9 | 綜合案例：主管丟需求給你 | 🚧 | 4 | 8 | 開放題：需求拆解 → 查詢 → 驗證 → 結論 |
-| | **合計** | | **39** | **92** | |
+| 4 | 資料清理：CASE、NULL、字串與日期 | ✅ | 4 | 13 | CASE 分級、COALESCE / NULLIF、TRIM / LOWER / REPLACE、strftime 與日期區間 |
+| 5 | 子查詢與 CTE | ✅ | 4 | 8 | 子查詢、EXISTS、WITH 多步驟拆解、可讀性 |
+| 6 | 視窗函數 | ✅ | 4 | 11 | ROW_NUMBER / RANK、PARTITION BY、LAG / LEAD、累計與移動平均 |
+| 7 | 行銷分析實戰 | ✅ | 5 | 12 | 漏斗、Cohort 留存、RFM、CTR / CPC / ROAS、新舊客拆解 |
+| 8 | 寫入資料與資料表設計 | ✅ | 4 | 6 | INSERT / UPDATE / DELETE、CREATE TABLE、交易、索引 |
+| 9 | 綜合案例：主管丟需求給你 | ✅ | 4 | 8 | 開放題：需求拆解 → 查詢 → 驗證 → 結論 |
+| | **合計** | | **39** | **96** | |
 
 ## 已開放單元明細
 
@@ -69,7 +76,7 @@
 | 3-3 多表 JOIN 與重複計算 | 串三張表、**一對多讓金額重複計算**、金額屬於哪一層、COUNT(DISTINCT) | 各分類成交營收（2）、修正偏高的營收報表（3） |
 | 3-4 UNION | JOIN 橫向 vs UNION 縱向、UNION 與 UNION ALL、分段報表標籤欄 | 再行銷名單不重複（2）、B2B 與 B2C 營收對照（2） |
 
-## 規劃中單元：預定練習主題
+## U4～U9 已發布主題
 
 | 單元 | 預定情境題 |
 |---|---|
