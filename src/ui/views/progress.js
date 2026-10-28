@@ -3,6 +3,7 @@
  */
 import { h, icon, toast } from '../dom.js';
 import { listCatalog, loadCourse, courseStats, nextLesson } from '../../core/courseRegistry.js';
+import { recommendNextCourse } from '../../core/learningPaths.js';
 
 export async function renderProgress(app) {
   const catalog = listCatalog().filter(c => c.load);
@@ -24,6 +25,9 @@ export async function renderProgress(app) {
   const weekDays = activeDaysInLast(7, d.activity);
   const completedCourses = courses.filter(course => statsById.get(course.id).pct === 100);
   const continueTarget = resolveContinueTarget(courses, statsById, app.progress, d.last);
+  const lastCompletedId = d.last && statsById.get(d.last.courseId)?.pct === 100 ? d.last.courseId : null;
+  const recommendation = recommendNextCourse(catalog, statsById, { afterCourseId: lastCompletedId, onlyUnstarted: true });
+  const recommendedCourse = recommendation ? courses.find(course => course.id === recommendation.entry.id) : null;
   const wrongExs = collectWrongExercises(courses, app.progress);
   const reviewPanel = wrongReviewPanel(app, wrongExs);
 
@@ -59,6 +63,12 @@ export async function renderProgress(app) {
             h('div', { class: 'bar' }, h('i', { style: `width:${continueTarget.stats.pct}%` })),
             h('span', {}, `${continueTarget.stats.exSolved} / ${continueTarget.stats.exTotal} 題 · ${continueTarget.stats.pct}%`))),
         h('a', { class: 'btn btn-primary', href: `#/learn/${continueTarget.course.id}/${continueTarget.lesson.id}` }, '繼續', icon('right')))),
+
+    recommendation && recommendedCourse && h('section', { class: 'section dashboard-recommendation' },
+      h('div', { class: 'section-heading' },
+        h('div', {}, h('p', { class: 'kicker' }, '推薦下一步'), h('h2', { class: 'section-title' }, '下一門適合你的課程')),
+        h('span', { class: 'badge' }, recommendation.path.title)),
+      recommendationCard(recommendation, recommendedCourse, statsById.get(recommendedCourse.id))),
 
     h('section', { class: 'section' },
       h('div', { class: 'section-heading' },
@@ -143,6 +153,22 @@ function hasStarted(course, progress) {
     if (progress.data.lessons[`${course.id}/${lesson.id}`]?.visitedAt) return true;
     return (lesson.exercises || []).some(ex => !!progress.ex(ex.id));
   });
+}
+
+function recommendationCard(recommendation, course, stats) {
+  const firstLesson = course.flat[0]?.lesson;
+  const href = firstLesson ? `#/learn/${course.id}/${firstLesson.id}` : `#/course/${course.id}`;
+  return h('article', { class: 'recommendation-card card' },
+    h('div', { class: 'recommendation-main' },
+      h('div', { class: 'catalog-top' },
+        h('span', { class: 'tag' }, recommendation.entry.level),
+        h('span', { class: 'badge badge-soft' }, `${stats.lessonsTotal} 課 · ${stats.exTotal} 題`)),
+      h('h3', {}, course.title),
+      h('p', { class: 'muted' }, recommendation.reason),
+      recommendation.entry.blurb && h('p', { class: 'recommendation-blurb' }, recommendation.entry.blurb)),
+    h('div', { class: 'recommendation-action' },
+      h('a', { class: 'btn btn-primary', href }, '開始這門課', icon('right')),
+      h('a', { class: 'btn btn-secondary btn-sm', href: `#/course/${course.id}` }, '查看課程介紹')));
 }
 
 function wrongReviewPanel(app, wrongExs) {

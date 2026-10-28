@@ -2,7 +2,8 @@
  * 課程總覽頁：課程介紹、進度、4 週學習計畫、完整大綱。
  */
 import { h, icon, toast } from '../dom.js';
-import { courseStats, unitStats, nextLesson } from '../../core/courseRegistry.js';
+import { courseStats, unitStats, nextLesson, listCatalog, loadCourse } from '../../core/courseRegistry.js';
+import { recommendNextCourse } from '../../core/learningPaths.js';
 
 export async function renderCourse(app, { courseId }) {
   const course = await app.getCourse(courseId);
@@ -12,6 +13,15 @@ export async function renderCourse(app, { courseId }) {
   const started = stats.exSolved > 0;
   const unitById = Object.fromEntries(course.units.map((u) => [u.id, u]));
   const publishedLessons = course.flat.length;
+  let recommendation = null;
+  if (stats.pct === 100) {
+    const catalog = listCatalog().filter(entry => entry.load);
+    const courses = (await Promise.all(catalog.map(entry => loadCourse(entry.id)))).filter(Boolean);
+    const statsById = new Map(courses.map(item => [item.id, courseStats(item, app.progress)]));
+    const result = recommendNextCourse(catalog, statsById, { afterCourseId: course.id, onlyUnstarted: true });
+    const nextCourse = result ? courses.find(item => item.id === result.entry.id) : null;
+    if (result && nextCourse) recommendation = { ...result, course: nextCourse };
+  }
 
   return h('div', { class: 'page page-course' },
     h('section', { class: 'course-hero' },
@@ -70,7 +80,27 @@ export async function renderCourse(app, { courseId }) {
             h('button', { class: 'btn btn-secondary', onclick: () => {
               navigator.share ? navigator.share({ title: '我完成了 ' + course.title, url: location.href })
                 : navigator.clipboard.writeText(location.href).then(() => toast('連結已複製'));
-            }}, '分享'))))));
+            }}, '分享')))),
+
+      recommendation && h('section', { class: 'section' },
+        h('p', { class: 'kicker' }, '完成之後學什麼？'),
+        h('h2', { class: 'section-title' }, '推薦下一門課'),
+        courseRecommendationCard(recommendation))));
+}
+
+function courseRecommendationCard(recommendation) {
+  const firstLesson = recommendation.course.flat[0]?.lesson;
+  return h('article', { class: 'recommendation-card card' },
+    h('div', { class: 'recommendation-main' },
+      h('div', { class: 'catalog-top' },
+        h('span', { class: 'tag' }, recommendation.entry.level),
+        h('span', { class: 'badge' }, recommendation.path.title)),
+      h('h3', {}, recommendation.course.title),
+      h('p', { class: 'muted' }, recommendation.reason),
+      recommendation.entry.blurb && h('p', { class: 'recommendation-blurb' }, recommendation.entry.blurb)),
+    h('div', { class: 'recommendation-action' },
+      h('a', { class: 'btn btn-primary', href: firstLesson ? `#/learn/${recommendation.course.id}/${firstLesson.id}` : `#/course/${recommendation.course.id}` }, '開始下一門課', icon('right')),
+      h('a', { class: 'btn btn-secondary btn-sm', href: `#/course/${recommendation.course.id}` }, '查看課程介紹')));
 }
 
 function unitBlock(app, course, u) {

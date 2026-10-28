@@ -3,19 +3,13 @@
  */
 import { h, icon } from '../dom.js';
 import { listCatalog, loadCourse, courseStats, nextLesson } from '../../core/courseRegistry.js';
+import { LEARNING_PATHS } from '../../core/learningPaths.js';
 
 const FILTERS = [
   { key: 'all', label: '全部' },
   { key: 'sql', label: 'SQL 分析', match: c => c.tags?.some(t => ['SQL', 'BigQuery', 'GA4', '資料分析', '面試'].includes(t)) },
   { key: 'ai', label: 'AI 工具', match: c => c.tags?.some(t => ['AI', 'Prompt', 'ChatGPT', 'Claude'].includes(t)) },
   { key: 'pm', label: 'PM 實務', match: c => c.tags?.some(t => ['PM', 'PRD', 'Product', 'Growth', 'AARRR'].includes(t)) },
-];
-
-const LEARNING_PATHS = [
-  { title: 'SQL 分析師路徑', audience: 'Excel 使用者、數據分析初學者', hours: '約 20 小時', outcome: '從試算表思維走到能獨立完成 SQL 分析與面試題。', courses: ['excel-to-sql', 'sql-foundations', 'sql-interview'] },
-  { title: '行銷數據路徑', audience: '行銷、Growth、電商營運', hours: '約 24 小時', outcome: '從資料查詢、GA4 事件分析到成長與儀表板決策。', courses: ['sql-foundations', 'bigquery-ga4', 'looker-studio', 'growth-analytics'] },
-  { title: 'PM 產品路徑', audience: 'PM、產品營運、創業團隊', hours: '約 20 小時', outcome: '用數據做產品決策，並把需求寫成可執行的 PRD。', courses: ['pm-sql', 'growth-analytics', 'prd-writing', 'ai-workflow'] },
-  { title: 'AI 生產力路徑', audience: '行銷、PM、內容與知識工作者', hours: '約 9 小時', outcome: '建立可靠的 AI 工作流程，寫出可重複使用的 Prompt。', courses: ['ai-workflow', 'prompt-engineering'] },
 ];
 
 export async function renderHome(app) {

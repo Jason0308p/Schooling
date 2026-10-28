@@ -301,6 +301,13 @@ pre.relation { font-size: 0.8125rem; line-height: 1.8; }
 .continue-main { display: grid; gap: 8px; flex: 1; min-width: 0; }
 .continue-main h3, .continue-main p { margin: 0; }
 .continue-main .catalog-progress { max-width: 560px; }
+.recommendation-card { display: grid; grid-template-columns: minmax(0, 1fr) 210px; overflow: hidden; }
+.recommendation-main { padding: 24px; display: grid; gap: 10px; }
+.recommendation-main h3 { font-size: 1.3rem; }
+.recommendation-main p { margin: 0; }
+.recommendation-blurb { color: var(--ink-2); font-size: 0.9375rem; max-width: 68ch; }
+.recommendation-action { padding: 22px; border-left: 1px solid var(--line); background: color-mix(in srgb, var(--brand-soft) 55%, var(--surface)); display: grid; align-content: center; gap: 10px; }
+.recommendation-action .btn { width: 100%; }
 .dashboard-course-grid { display: grid; gap: 14px; }
 .dashboard-course {
   display: grid; grid-template-columns: 7px minmax(0, 1fr) 190px;
@@ -407,6 +414,8 @@ pre.relation { font-size: 0.8125rem; line-height: 1.8; }
   .dashboard-head .btn { width: 100%; }
   .continue-card { align-items: stretch; flex-direction: column; }
   .continue-card > .btn { align-self: flex-start; }
+  .recommendation-card { grid-template-columns: 1fr; }
+  .recommendation-action { border-left: 0; border-top: 1px solid var(--line); }
   .dashboard-split { grid-template-columns: 1fr; }
   .review-toolbar { align-items: stretch; flex-direction: column; }
   .review-filter { width: 100%; max-width: none; }
