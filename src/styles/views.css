@@ -276,6 +276,33 @@ pre.relation { font-size: 0.8125rem; line-height: 1.8; }
 .io-box { width: 100%; font-family: var(--font-mono); font-size: 0.8125rem; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--line-2); background: var(--surface-2); color: var(--ink); resize: vertical; }
 .row-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
+.dashboard-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+.dashboard-head h1 { margin-bottom: 8px; }
+.dashboard-kpis { margin-top: 8px; }
+.continue-card { padding: 24px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-color: color-mix(in srgb, var(--brand) 35%, var(--line)); }
+.continue-main { display: grid; gap: 8px; flex: 1; min-width: 0; }
+.continue-main h3, .continue-main p { margin: 0; }
+.continue-main .catalog-progress { max-width: 560px; }
+.dashboard-course-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.dashboard-course { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.dashboard-course h3 { font-size: 1.125rem; }
+.dashboard-course > .btn { align-self: flex-start; margin-top: auto; }
+.dashboard-split { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.8fr); gap: 20px; }
+.dashboard-split > div { min-width: 0; }
+.summary-list { padding: 8px 20px; }
+.summary-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.summary-row:last-child { border-bottom: 0; }
+.summary-row span { color: var(--muted); }
+.summary-row strong { font-variant-numeric: tabular-nums; }
+.dashboard-empty { padding: 28px; text-align: center; }
+.dashboard-empty p { margin: 6px 0 0; }
+.certificate-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.certificate-mini { padding: 20px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; }
+.certificate-mini .icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--ok-soft); color: var(--ok); }
+.certificate-mini span { font-weight: 700; }
+.certificate-mini strong { color: var(--brand-strong); font-size: var(--fs-sm); }
+.certificate-mini:hover { border-color: var(--brand); }
+
 /* ---------- 結業證書 ---------- */
 .certificate {
   text-align: center; padding: 48px 32px;
@@ -342,6 +369,13 @@ pre.relation { font-size: 0.8125rem; line-height: 1.8; }
   .catalog-tools { align-items: stretch; flex-direction: column; }
   .catalog-count { align-self: flex-end; }
   .course-search { width: 100%; }
+  .dashboard-head { align-items: flex-start; flex-direction: column; }
+  .dashboard-head .btn { width: 100%; }
+  .continue-card { align-items: stretch; flex-direction: column; }
+  .continue-card > .btn { align-self: flex-start; }
+  .dashboard-split { grid-template-columns: 1fr; }
+  .certificate-mini { grid-template-columns: auto 1fr; }
+  .certificate-mini strong { grid-column: 2; }
   .exercise { padding: 18px 16px; }
   .kbd-hint { display: none; }
   .unit summary { grid-template-columns: auto 1fr; }
