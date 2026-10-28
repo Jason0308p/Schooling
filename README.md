@@ -55,6 +55,7 @@ Schooling/
 | [docs/CONTENT_GUIDE.md](docs/CONTENT_GUIDE.md) | 寫課程的人 | 怎麼新增課、題目、單元、課程，欄位規格 |
 | [docs/DATASET.md](docs/DATASET.md) | 寫課程的人 | 練習資料表說明、資料特性、刻意埋的髒資料 |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | 要上線的人 | 部署到 Cloudflare Workers、Git 自動部署、疑難排解 |
+| [docs/CI.md](docs/CI.md) | 開發者 / AI Agent | GitHub Actions 自動驗證、觸發方式與結果判讀 |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | 決策者 | 商業化與擴充路線 |
 
 ## 常用指令

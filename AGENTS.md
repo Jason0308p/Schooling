@@ -18,6 +18,7 @@ Before changing files, read the documents relevant to the task:
 - `docs/ARCHITECTURE.md`: layers, data flow, grading, and extension points.
 - `docs/CONTENT_GUIDE.md`: required before creating or editing course content.
 - `docs/DEPLOY.md`: required before building or deploying.
+- `docs/CI.md`: automated validation, triggers, and failure handling.
 - `docs/CURRICULUM.md`: curriculum status and course planning.
 - `docs/AGENT_CHANGELOG.md`: durable decisions made by previous agents.
 

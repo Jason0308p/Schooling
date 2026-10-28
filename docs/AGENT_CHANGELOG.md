@@ -12,6 +12,12 @@ This file records durable decisions that future human and AI contributors need t
 - Affected areas: Files or workflows that must follow it.
 ```
 
+## 2026-10-28 — CI-only GitHub Actions
+
+- Decision: GitHub Actions runs validation only (syntax check, content validator, untracked `dist/`) on push/PR to `main`. It must not deploy. Any future auto-deploy requires GitHub Actions Secrets and explicit user approval.
+- Reason: Cloudflare Workers hosts the site; Actions only guards quality before release and avoids unreviewed code going live.
+- Affected areas: `.github/workflows/quality-checks.yml`, `docs/CI.md`, `docs/DEPLOY.md`.
+
 ## 2026-10-28 — Lazy-load the SQL engine
 
 - Decision: The home page, Dashboard, and non-SQL courses must not load sql.js or initialize SQLite. Load `sql-wasm.js`, its WASM file, and the dataset snapshot only when a SQL course or SQL-specific feature is opened.
