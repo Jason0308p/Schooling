@@ -110,20 +110,22 @@ function learningPathCard(path, catalog, courseById, statsById, progress) {
   const href = currentStats.exSolved > 0 && next ? `#/learn/${loaded.id}/${next.lesson.id}` : `#/course/${current.id}`;
 
   return h('article', { class: 'path-card card' },
-    h('div', { class: 'path-head' },
-      h('div', {}, h('h3', {}, path.title), h('p', { class: 'muted' }, path.audience)),
-      h('span', { class: 'badge' }, path.hours)),
-    h('p', { class: 'path-outcome' }, path.outcome),
-    h('ol', { class: 'path-course-list' }, entries.map((c, i) => {
-      const done = statsById.get(c.id).pct === 100;
-      return h('li', { class: done ? 'is-done' : '' },
-        h('span', { class: 'path-step-no' }, done ? '✓' : i + 1),
-        h('a', { href: `#/course/${c.id}` }, c.title));
-    })),
-    h('div', { class: 'catalog-progress' },
-      h('div', { class: 'bar' }, h('i', { style: `width:${pct}%` })),
-      h('span', {}, pct ? `路徑進度 ${pct}%` : `${entries.length} 門課 · 尚未開始`)),
-    h('a', { class: 'btn btn-secondary', href }, pct ? '繼續這條路徑' : '開始這條路徑', icon('right')));
+    h('div', { class: 'path-card-body' },
+      h('div', { class: 'path-head' },
+        h('div', {}, h('h3', {}, path.title), h('p', { class: 'muted' }, path.audience)),
+        h('span', { class: 'badge' }, path.hours)),
+      h('p', { class: 'path-outcome' }, path.outcome),
+      h('ol', { class: 'path-course-list' }, entries.map((c, i) => {
+        const done = statsById.get(c.id).pct === 100;
+        return h('li', { class: done ? 'is-done' : '' },
+          h('span', { class: 'path-step-no' }, done ? '✓' : i + 1),
+          h('a', { href: `#/course/${c.id}` }, c.title));
+      }))),
+    h('div', { class: 'path-card-action' },
+      h('div', { class: 'catalog-progress' },
+        h('div', { class: 'bar' }, h('i', { style: `width:${pct}%` })),
+        h('span', {}, pct ? `路徑進度 ${pct}%` : `${entries.length} 門課 · 尚未開始`)),
+      h('a', { class: 'btn btn-primary', href }, pct ? '繼續這條路徑' : '開始這條路徑', icon('right'))));
 }
 
 function catalogSection(catalog, statsById) {
@@ -173,14 +175,20 @@ function catalogSection(catalog, statsById) {
 }
 
 function catalogCard(course, stats) {
-  return h('a', { class: 'catalog-card card', href: courseHref(course.id, stats) },
-    h('div', { class: 'catalog-top' },
-      h('span', { class: 'tag' }, course.level),
-      stats.pct === 100 ? h('span', { class: 'badge badge-ok' }, '已完成') : stats.exSolved > 0 ? h('span', { class: 'badge' }, '學習中') : h('span', { class: 'badge badge-soft' }, '尚未開始')),
-    h('h3', {}, course.title),
-    course.blurb && h('p', { class: 'muted' }, course.blurb),
-    h('div', { class: 'tag-row' }, (course.tags || []).map(tag => h('span', { class: 'tag tag-soft' }, tag))),
-    progressSummary(stats));
+  const started = stats.exSolved > 0;
+  const actionLabel = stats.pct === 100 ? '查看課程' : started ? '繼續課程' : '查看課程';
+  return h('article', { class: `catalog-card card${started ? ' is-started' : ''}${stats.pct === 100 ? ' is-complete' : ''}` },
+    h('span', { class: 'catalog-rail', 'aria-hidden': 'true' }),
+    h('div', { class: 'catalog-card-body' },
+      h('div', { class: 'catalog-top' },
+        h('span', { class: 'tag' }, course.level),
+        stats.pct === 100 ? h('span', { class: 'badge badge-ok' }, '已完成') : started ? h('span', { class: 'badge' }, '學習中') : h('span', { class: 'badge badge-soft' }, '尚未開始')),
+      h('h3', {}, h('a', { href: `#/course/${course.id}` }, course.title)),
+      course.blurb && h('p', { class: 'muted' }, course.blurb),
+      h('div', { class: 'tag-row' }, (course.tags || []).map(tag => h('span', { class: 'tag tag-soft' }, tag)))),
+    h('div', { class: 'catalog-card-action' },
+      progressSummary(stats),
+      h('a', { class: 'btn btn-primary btn-sm', href: courseHref(course.id, stats) }, actionLabel, icon('right'))));
 }
 
 function progressSummary(stats) {

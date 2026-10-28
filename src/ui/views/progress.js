@@ -132,13 +132,16 @@ function dashboardCourseCard(course, entry, stats, progress) {
   const started = hasStarted(course, progress);
   const state = stats.pct === 100 ? '已完成' : started ? '學習中' : '尚未開始';
   const href = stats.pct === 100 ? `#/course/${course.id}` : `#/learn/${course.id}/${next.lesson.id}`;
-  return h('article', { class: 'dashboard-course card' },
-    h('div', { class: 'catalog-top' }, h('span', { class: 'tag' }, entry.level), h('span', { class: `badge${stats.pct === 100 ? ' badge-ok' : ''}` }, state)),
-    h('h3', {}, course.title),
-    h('div', { class: 'catalog-progress' },
-      h('div', { class: 'bar' }, h('i', { style: `width:${stats.pct}%` })),
-      h('span', {}, `${stats.exSolved} / ${stats.exTotal} 題 · ${stats.pct}%`)),
-    h('a', { class: 'btn btn-secondary btn-sm', href }, stats.pct === 100 ? '查看課程與證書' : started ? '繼續學習' : '開始課程'));
+  return h('article', { class: `dashboard-course card${started ? ' is-started' : ''}${stats.pct === 100 ? ' is-complete' : ''}` },
+    h('span', { class: 'catalog-rail', 'aria-hidden': 'true' }),
+    h('div', { class: 'dashboard-course-body' },
+      h('div', { class: 'catalog-top' }, h('span', { class: 'tag' }, entry.level), h('span', { class: `badge${stats.pct === 100 ? ' badge-ok' : ''}` }, state)),
+      h('h3', {}, course.title)),
+    h('div', { class: 'dashboard-course-action' },
+      h('div', { class: 'catalog-progress' },
+        h('div', { class: 'bar' }, h('i', { style: `width:${stats.pct}%` })),
+        h('span', {}, `${stats.exSolved} / ${stats.exTotal} 題 · ${stats.pct}%`)),
+      h('a', { class: 'btn btn-primary btn-sm', href }, stats.pct === 100 ? '查看課程與證書' : started ? '繼續學習' : '開始課程')));
 }
 
 function hasStarted(course, progress) {
