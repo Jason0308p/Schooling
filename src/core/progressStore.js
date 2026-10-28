@@ -8,7 +8,7 @@
  * 資料結構（v1）：
  * {
  *   schema: 1,
- *   exercises: { [exerciseId]: { status: 'attempted'|'solved', attempts, revealed, solvedAt, draft } },
+ *   exercises: { [exerciseId]: { status: 'attempted'|'solved', attempts, revealed, solvedAt, lastAttemptAt, lastWrongAt, draft } },
  *   lessons:   { [lessonKey]: { visitedAt, completedAt } },   // lessonKey = `${courseId}/${lessonId}`
  *   activity:  { 'YYYY-MM-DD': 次數 },                       // 學員本機日期
  *   last:      { courseId, lessonId, at }
@@ -67,8 +67,11 @@ export class ProgressStore {
 
   recordAttempt(id, correct) {
     const e = this.data.exercises[id] || { status: 'attempted', attempts: 0, revealed: false };
+    const now = new Date().toISOString();
     e.attempts += 1;
-    if (correct && e.status !== 'solved') { e.status = 'solved'; e.solvedAt = new Date().toISOString(); }
+    e.lastAttemptAt = now;
+    if (correct && e.status !== 'solved') { e.status = 'solved'; e.solvedAt = now; }
+    if (!correct) e.lastWrongAt = now;
     this.data.exercises[id] = e;
     this.touchActivity();
     this.persist({ immediate: true });

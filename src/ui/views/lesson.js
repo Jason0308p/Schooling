@@ -24,6 +24,7 @@ export async function renderLesson(app, { courseId, lessonId }) {
   const found = course && findLesson(course, lessonId);
   if (!found) return h('div', { class: 'page' }, h('h1', {}, '找不到這一課'), h('a', { href: `#/course/${courseId}` }, '回課程總覽'));
   const { unit, lesson, prev, next } = found;
+  const reviewTarget = app.takeReviewTarget?.(course.id, lesson.id);
   app.progress.visitLesson(course.id, lesson.id);
 
   const sidebar = h('aside', { class: 'lesson-sidebar', 'aria-label': '課程目錄' });
@@ -121,8 +122,18 @@ export async function renderLesson(app, { courseId, lessonId }) {
       h('div', { class: 'feedback-body' }, '如果你是直接雙擊 index.html 開啟，請改用 start.bat 啟動（見 README）。')));
   });
 
-  // 元件掛到畫面後 CodeMirror 需要 refresh 才能量對尺寸
+  // 元件掛到畫面後 CodeMirror 需要 refresh；錯題複習則在 route 掛載完成後定位題目
   requestAnimationFrame(() => cards.forEach((c) => c.refresh()));
+  if (reviewTarget?.exerciseId) {
+    setTimeout(() => {
+      const target = document.getElementById(reviewTarget.exerciseId);
+      if (target) {
+        target.classList.add('is-review-target');
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(() => target.classList.remove('is-review-target'), 8000);
+      }
+    }, 80);
+  }
   document.body.classList.remove('sidebar-open');
   return view;
 }

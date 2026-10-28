@@ -408,6 +408,14 @@ pre.relation { font-size: 0.8125rem; line-height: 1.8; }
   .continue-card { align-items: stretch; flex-direction: column; }
   .continue-card > .btn { align-self: flex-start; }
   .dashboard-split { grid-template-columns: 1fr; }
+  .review-toolbar { align-items: stretch; flex-direction: column; }
+  .review-filter { width: 100%; max-width: none; }
+  .review-toolbar .spacer { display: none; }
+  .review-toolbar .btn { width: 100%; }
+  .wrong-ex-list { padding: 0 16px; }
+  .wrong-ex-item { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+  .wrong-ex-attempts { grid-column: 1; text-align: left; min-width: 0; }
+  .wrong-ex-item .btn { grid-column: 2; grid-row: 1 / span 2; }
   .certificate-mini { grid-template-columns: auto 1fr; }
   .certificate-mini strong { grid-column: 2; }
   .exercise { padding: 18px 16px; }

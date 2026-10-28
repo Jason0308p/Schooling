@@ -37,6 +37,7 @@ async function boot() {
   }
 
   let pendingPlaygroundSql = null;
+  let pendingReviewTarget = null;
 
   const app = {
     config,
@@ -56,6 +57,16 @@ async function boot() {
     },
     openInPlayground(sql) { pendingPlaygroundSql = sql; location.hash = '#/playground'; },
     takePlaygroundSql() { const s = pendingPlaygroundSql; pendingPlaygroundSql = null; return s; },
+    openReview(courseId, lessonId, exerciseId) {
+      pendingReviewTarget = { courseId, lessonId, exerciseId };
+      location.hash = `#/learn/${courseId}/${lessonId}`;
+    },
+    takeReviewTarget(courseId, lessonId) {
+      if (pendingReviewTarget?.courseId !== courseId || pendingReviewTarget?.lessonId !== lessonId) return null;
+      const target = pendingReviewTarget;
+      pendingReviewTarget = null;
+      return target;
+    },
     toggleTheme() {
       const dark = document.documentElement.dataset.theme
         ? document.documentElement.dataset.theme === 'dark'

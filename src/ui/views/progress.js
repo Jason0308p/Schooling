@@ -25,6 +25,7 @@ export async function renderProgress(app) {
   const completedCourses = courses.filter(course => statsById.get(course.id).pct === 100);
   const continueTarget = resolveContinueTarget(courses, statsById, app.progress, d.last);
   const wrongExs = collectWrongExercises(courses, app.progress);
+  const reviewPanel = wrongReviewPanel(app, wrongExs);
 
   const io = h('textarea', { class: 'io-box', rows: 6, spellcheck: 'false', placeholder: '貼上之前匯出的進度 JSON，再按「匯入」' });
   const resetConfirm = h('span', { class: 'inline-confirm', hidden: true },
@@ -79,16 +80,9 @@ export async function renderProgress(app) {
 
     h('section', { class: 'section' },
       h('div', { class: 'section-heading' },
-        h('div', {}, h('h2', { class: 'section-title' }, icon('bulb'), ' 待複習題目'), h('p', { class: 'muted' }, '顯示曾作答但尚未答對的題目。')),
-        wrongExs.length > 0 && h('span', { class: 'badge badge-warn' }, `${wrongExs.length} 題`)),
-      wrongExs.length === 0
-        ? h('div', { class: 'card dashboard-empty' }, h('strong', {}, '目前沒有待複習題目'), h('p', { class: 'muted' }, '答錯的題目會自動出現在這裡。'))
-        : h('div', { class: 'card' }, h('div', { class: 'wrong-ex-list' }, wrongExs.slice(0, 12).map(({ course, lesson, ex, attempts: count }) =>
-          h('div', { class: 'wrong-ex-item' },
-            h('span', { class: 'wrong-ex-lesson' }, course.title),
-            h('span', { class: 'wrong-ex-title' }, ex.title),
-            h('span', { class: 'wrong-ex-attempts' }, `${count} 次`),
-            h('a', { class: 'btn btn-secondary btn-sm', href: `#/learn/${course.id}/${lesson.id}` }, '重新作答')))))),
+        h('div', {}, h('h2', { class: 'section-title' }, icon('bulb'), ' 錯題複習'), h('p', { class: 'muted' }, '依課程篩選錯題，或隨機抽一題重新練習。')),
+        wrongExs.length > 0 && h('span', { class: 'badge badge-warn' }, `${wrongExs.length} 題待複習`)),
+      reviewPanel),
 
     h('section', { class: 'section' },
       h('div', { class: 'section-heading' },
@@ -151,13 +145,69 @@ function hasStarted(course, progress) {
   });
 }
 
+function wrongReviewPanel(app, wrongExs) {
+  if (wrongExs.length === 0) {
+    return h('div', { class: 'card dashboard-empty' },
+      h('strong', {}, '目前沒有待複習題目'),
+      h('p', { class: 'muted' }, '答錯的題目會自動出現在這裡；答對後會自動移出。'));
+  }
+
+  let courseId = 'all';
+  const list = h('div', { class: 'wrong-ex-list' });
+  const count = h('span', { class: 'review-count muted' });
+  const courseOptions = [...new Map(wrongExs.map(row => [row.course.id, row.course.title])).entries()];
+  const select = h('select', { class: 'review-filter', 'aria-label': '依課程篩選錯題', onchange: (event) => { courseId = event.target.value; paint(); } },
+    h('option', { value: 'all' }, '全部課程'),
+    courseOptions.map(([id, title]) => h('option', { value: id }, title)));
+
+  const filtered = () => courseId === 'all' ? wrongExs : wrongExs.filter(row => row.course.id === courseId);
+  const openReview = (row) => app.openReview(row.course.id, row.lesson.id, row.ex.id);
+  const randomBtn = h('button', { class: 'btn btn-primary', type: 'button', onclick: () => {
+    const rows = filtered();
+    if (!rows.length) return;
+    openReview(rows[Math.floor(Math.random() * rows.length)]);
+  } }, icon('play'), h('span', {}, '隨機抽一題'));
+
+  const paint = () => {
+    const rows = filtered();
+    count.textContent = `顯示 ${rows.length} 題`;
+    randomBtn.disabled = rows.length === 0;
+    list.replaceChildren(...rows.map(({ course, lesson, ex, attempts, lastAttemptAt }) =>
+      h('div', { class: 'wrong-ex-item' },
+        h('div', { class: 'wrong-ex-main' },
+          h('span', { class: 'wrong-ex-course' }, course.title),
+          h('strong', { class: 'wrong-ex-title' }, ex.title || ex.question || '未命名題目'),
+          h('span', { class: 'wrong-ex-time' }, `上次作答：${formatReviewTime(lastAttemptAt)}`)),
+        h('span', { class: 'wrong-ex-attempts' }, `答錯 ${attempts} 次`),
+        h('button', { class: 'btn btn-secondary btn-sm', type: 'button', onclick: () => openReview({ course, lesson, ex }) }, '重新作答'))));
+  };
+
+  const panel = h('div', { class: 'card review-panel' },
+    h('div', { class: 'review-toolbar' }, select, count, h('span', { class: 'spacer' }), randomBtn),
+    list);
+  paint();
+  return panel;
+}
+
+function formatReviewTime(value) {
+  if (!value) return '較早的紀錄';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '較早的紀錄';
+  return date.toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
 function collectWrongExercises(courses, progress) {
   const rows = [];
   courses.forEach(course => course.flat.forEach(({ lesson }) => (lesson.exercises || []).forEach(ex => {
     const state = progress.ex(ex.id);
-    if (state?.attempts > 0 && state.status !== 'solved') rows.push({ course, lesson, ex, attempts: state.attempts });
+    if (state?.attempts > 0 && state.status !== 'solved') rows.push({
+      course, lesson, ex, attempts: state.attempts, lastAttemptAt: state.lastAttemptAt || state.lastWrongAt || null,
+    });
   })));
-  return rows.sort((a, b) => b.attempts - a.attempts);
+  return rows.sort((a, b) => {
+    const timeDiff = new Date(b.lastAttemptAt || 0) - new Date(a.lastAttemptAt || 0);
+    return timeDiff || b.attempts - a.attempts;
+  });
 }
 
 function activeDaysInLast(days, activity) {
