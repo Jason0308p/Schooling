@@ -1,5 +1,5 @@
 /**
- * 應用程式進入點：初始化引擎 → 建立 app 物件（給所有畫面共用的服務）→ 啟動路由。
+ * 應用程式進入點：建立 app 物件 → 啟動路由；SQL 引擎只在 SQL 功能需要時載入。
  */
 import { config } from './config.js';
 import { initEngine, ensureDataset } from './core/sqlEngine.js';
@@ -36,7 +36,6 @@ async function boot() {
     return;
   }
 
-  await initEngine({ wasmDir: 'src/vendor/sqljs' });
   let pendingPlaygroundSql = null;
 
   const app = {
@@ -45,7 +44,10 @@ async function boot() {
     progress: new ProgressStore(new LocalStorageAdapter(config.storage.progressKey)),
     async getCourse(id = config.defaultCourseId) {
       const c = await loadCourse(id);
-      if (c?.dataset) ensureDataset(c.dataset);
+      if (c?.dataset) {
+        await initEngine({ wasmDir: 'src/vendor/sqljs' });
+        ensureDataset(c.dataset);
+      }
       return c;
     },
     openSchema: async () => {
@@ -64,7 +66,6 @@ async function boot() {
     },
   };
 
-  await app.getCourse(); // 預先載入課程與資料庫，之後換頁都是即時的
   const { main } = renderShell(app);
 
   const show = (navKey, render) => async (params) => {
@@ -77,7 +78,7 @@ async function boot() {
       const courseId = params?.courseId;
       const btn = document.getElementById('schema-btn');
       if (btn) {
-        const c = courseId ? await loadCourse(courseId) : await app.getCourse();
+        const c = await loadCourse(courseId || config.defaultCourseId);
         btn.style.display = c?.dataset ? '' : 'none';
       }
     } catch (e) {

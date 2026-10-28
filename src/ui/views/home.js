@@ -23,7 +23,7 @@ export async function renderHome(app) {
   const loadedCourses = (await Promise.all(catalog.map(c => loadCourse(c.id)))).filter(Boolean);
   const courseById = new Map(loadedCourses.map(c => [c.id, c]));
   const statsById = new Map(loadedCourses.map(c => [c.id, courseStats(c, app.progress)]));
-  const defaultCourse = await app.getCourse();
+  const defaultCourse = await loadCourse(app.config.defaultCourseId);
   const defaultStats = statsById.get(defaultCourse.id);
   const started = defaultStats.exSolved > 0;
   const next = nextLesson(defaultCourse, app.progress);

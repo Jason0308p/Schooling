@@ -68,7 +68,8 @@
 ## 資料庫生命週期
 
 ```text
-啟動 → initEngine() 載入 sql-wasm.wasm
+啟動 → 只建立 UI、路由與進度 Store，不載入 SQL 引擎
+進入 SQL 課程／練習場／資料表 → 動態載入 sql-wasm.js 與 sql-wasm.wasm
      → ensureDataset(dataset)：建一次資料庫 → db.export() 存成快照（約 1.4 MB 的 Uint8Array）
 練習題「執行」/「送出」→ openFresh()：從快照開全新資料庫 → 跑 → close()
 練習場 → workspace()：長駐資料庫，可以被修改；「重置」= 關掉重開

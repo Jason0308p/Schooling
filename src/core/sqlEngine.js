@@ -9,13 +9,40 @@
  */
 
 let SQL = null;
+let enginePromise = null;
 const snapshots = new Map(); // datasetId -> Uint8Array
+
+function loadSqlJsScript(src) {
+  if (typeof window.initSqlJs === 'function') return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-sqljs]');
+    if (existing) {
+      existing.addEventListener('load', resolve, { once: true });
+      existing.addEventListener('error', () => reject(new Error('sql.js 載入失敗')), { once: true });
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.dataset.sqljs = 'true';
+    script.onload = resolve;
+    script.onerror = () => reject(new Error('sql.js 載入失敗'));
+    document.head.append(script);
+  });
+}
 
 export async function initEngine({ wasmDir }) {
   if (SQL) return SQL;
-  if (typeof window.initSqlJs !== 'function') throw new Error('sql.js 未載入');
-  SQL = await window.initSqlJs({ locateFile: (file) => `${wasmDir}/${file}` });
-  return SQL;
+  if (!enginePromise) {
+    enginePromise = (async () => {
+      await loadSqlJsScript(`${wasmDir}/sql-wasm.js`);
+      SQL = await window.initSqlJs({ locateFile: (file) => `${wasmDir}/${file}` });
+      return SQL;
+    })().catch((error) => {
+      enginePromise = null;
+      throw error;
+    });
+  }
+  return enginePromise;
 }
 
 /** 建立（或取得快取的）資料集快照 */

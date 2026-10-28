@@ -12,6 +12,12 @@ This file records durable decisions that future human and AI contributors need t
 - Affected areas: Files or workflows that must follow it.
 ```
 
+## 2026-10-28 — Lazy-load the SQL engine
+
+- Decision: The home page, Dashboard, and non-SQL courses must not load sql.js or initialize SQLite. Load `sql-wasm.js`, its WASM file, and the dataset snapshot only when a SQL course or SQL-specific feature is opened.
+- Reason: Most visitors should not pay the SQL engine startup cost before choosing a course, and non-SQL courses do not require SQLite.
+- Affected areas: `index.html`, `src/main.js`, `src/core/sqlEngine.js`, SQL course routes, playground, and data views.
+
 ## 2026-10-22 — Cross-agent project instructions
 
 - Decision: `AGENTS.md` is the canonical shared project rules entry point for agents that support it. Existing `CLAUDE.md` data remains independently maintained and must not be modified unless the user explicitly requests it.
