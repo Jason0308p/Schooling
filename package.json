@@ -6,6 +6,11 @@
   "description": "Schooling：以真實工作情境為核心的免費互動學習平台（純靜態網站，無需後端）",
   "scripts": {
     "validate": "node tools/validate-content.mjs",
-    "serve": "python tools/serve.py 8090"
+    "serve": "python tools/serve.py 8090",
+    "test": "playwright test",
+    "test:install": "playwright install --with-deps chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1"
   }
 }
