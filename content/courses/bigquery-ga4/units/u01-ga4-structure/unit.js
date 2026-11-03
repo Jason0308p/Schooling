@@ -35,7 +35,7 @@ ORDER BY session_count DESC;`,
           ],
           explanation: `GA4 的 \`device.category\` 欄位對應本資料集的 \`device\` 欄（mobile / desktop / tablet）。
 
-\`COUNT(DISTINCT session_id)\` 確保每個 session 只計一次，與 GA4 後台「工作階段」指標的計算邏輯相同。`,
+\`COUNT(DISTINCT session_id)\` 確保每個 session 只計一次，本課 session_id 已唯一；原生匯出需結合使用者識別與 ga_session_id，不保證與後台估算一致。`,
           negatives: [
             `SELECT device, COUNT(DISTINCT customer_id) AS session_count FROM sessions GROUP BY device ORDER BY session_count DESC`,
           ],
@@ -43,10 +43,10 @@ ORDER BY session_count DESC;`,
         },
         {
           id: 'ga4.u01.l01.e02',
-          title: '各到達頁的不重複訪客數',
+          title: '各到達頁的工作階段數',
           difficulty: 1,
           scenario: 'SEO 專員想知道哪些落地頁帶來最多訪客，找出最值得優化的頁面。',
-          prompt: `計算各到達頁（\`landing_page\`）的不重複訪客數，對應 GA4 的「不重複工作階段」。
+          prompt: `計算各到達頁（\`landing_page\`）的工作階段數（不是不重複訪客數）。
 
 以 \`session_id\` 計算不重複數量，欄位命名為 \`sessions\`。
 

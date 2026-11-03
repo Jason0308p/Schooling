@@ -10,7 +10,7 @@ export const unit = {
       minutes: 25,
       objectives: [
         '在 Looker Studio 連接 Google Ads 資料來源並識別核心指標欄位',
-        '用 Blended Data 以 Date + Campaign 為 Join Key 合併 GA4 與 Ads 資料',
+        '以 Ads 為左表，用日期與帳戶／活動穩定 ID 在相同粒度混合資料',
         '建立 ROAS、CTR、CPC 計算欄位並套用到 Scorecard 與 Table',
       ],
       body: md('./l01.md'),
@@ -27,13 +27,13 @@ export const unit = {
             'D. Cost（費用）÷ Impressions（曝光數）',
           ],
           answer: 1,
-          explanation: 'CPC（Cost Per Click，每次點擊費用）= 總費用（Cost）÷ 點擊數（Clicks）。這兩個欄位在 Google Ads 連接器中都有提供。在 Looker Studio 建立計算欄位時，公式寫成 `Cost / Clicks`，並建議用 `NULLIF(Clicks, 0)` 避免除以零的錯誤：`Cost / NULLIF(Clicks, 0)`。',
+          explanation: 'CPC（Cost Per Click，每次點擊費用）= 總費用（Cost）÷ 點擊數（Clicks）。這兩個欄位在 Google Ads 連接器中都有提供。在 Looker Studio 建立計算欄位時，若使用本課混合後可重新彙總的指標，在圖表專屬欄位寫 `SUM(Cost) / NULLIF(SUM(Clicks), 0)`；原生單來源 Auto 聚合指標不可直接重複 SUM。',
         },
         {
           id: 'ls.u04.l01.q02',
           type: 'mcq',
           title: 'ROAS 計算欄位',
-          question: '在 Blended Data 的計算欄位中，ROAS（Return on Ad Spend，廣告投資報酬率）的正確公式是？',
+          question: '先加入 GA4 營收與 Ads 花費到 Blend，再於使用 Blend 的圖表專屬計算欄位中，ROAS（Return on Ad Spend，廣告投資報酬率）的正確公式是？',
           options: [
             'A. Cost / Revenue',
             'B. Revenue / Cost',
@@ -41,7 +41,7 @@ export const unit = {
             'D. Clicks / Cost',
           ],
           answer: 1,
-          explanation: 'ROAS = 廣告帶來的營收（Revenue）÷ 廣告費用（Cost）。例如花了 10,000 元廣告費帶來 50,000 元營收，ROAS = 5（或 500%）。注意 ROAS 與 ROI 不同：ROI = (Revenue - Cost) / Cost，ROAS 不扣除成本。在 Looker Studio 計算欄位中寫：`SUM(Revenue) / NULLIF(SUM(Cost), 0)`，其中 Revenue 來自 GA4 資料來源，Cost 來自 Google Ads 資料來源。',
+          explanation: 'ROAS = 廣告帶來的營收（Revenue）÷ 廣告費用（Cost）。例如花了 10,000 元廣告費帶來 50,000 元營收，ROAS = 5（或 500%）。注意 ROAS 與 ROI 不同：簡化的廣告淨收益比為 (Revenue - Cost) / Cost，但完整 ROI 還需其他成本，ROAS 不扣除成本。先將欄位加入各自混合表，再在使用 Blend 的圖表專屬計算欄位中寫：`SUM(Revenue) / NULLIF(SUM(Cost), 0)`，其中 Revenue 來自 GA4 資料來源，Cost 來自 Google Ads 資料來源。',
         },
         {
           id: 'ls.u04.l01.q03',
@@ -55,7 +55,7 @@ export const unit = {
             'D. Google Ads 連接器的資料有延遲，導致日期不同步',
           ],
           answer: 1,
-          explanation: '當 Blended Data Join 後數值變成倍數（2x、3x），幾乎都是 **Join Key 不夠精確**造成的。例如只用「Date」作為 Join Key，但一個日期有 3 個廣告活動，GA4 的每一個 row 就會對應到 3 個 Ads row，Sessions 被加總了 3 次。解決方法：在 Join Key 中加入「Campaign name」讓配對更精確，或檢查兩個資料來源的 Campaign 名稱是否完全一致（大小寫、空格都要匹配）。',
+          explanation: '當 Blended Data Join 後數值變成倍數（2x、3x），幾乎都是 **Join Key 不夠精確**造成的。例如只用「Date」作為 Join Key，但一個日期有 3 個廣告活動，GA4 的每一個 row 就會對應到 3 個 Ads row，Sessions 被加總了 3 次。解決方法：確認兩側先彙總至相同粒度，每組日期、帳戶 ID、活動 ID 只一列；活動名稱可能重複或改名，不能當作唯一性保證。Ads 應為 Left outer join 左表，並對帳 Cost，避免漏花費。',
         },
       ],
     },

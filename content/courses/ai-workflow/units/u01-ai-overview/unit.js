@@ -27,7 +27,7 @@ export const unit = {
             'D. Google Analytics — 提供文件分析功能',
           ],
           answer: 1,
-          explanation: 'Claude 的 context window 大（可達 200K tokens），擅長閱讀長文、整理重點、產出結構化摘要，是處理大量文字的首選。Midjourney 和 Stable Diffusion 是圖片生成工具，Google Analytics 是數據分析平台，都無法執行文字整理工作。',
+          explanation: 'Claude 的 context window 相對較大（實際長度依模型與方案而異），擅長閱讀長文、整理重點、產出結構化摘要，是處理大量文字的首選。Midjourney 和 Stable Diffusion 是圖片生成工具，Google Analytics 是數據分析平台，都無法執行文字整理工作。',
         },
         {
           id: 'ai.u01.l01.q02',

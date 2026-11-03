@@ -4,7 +4,7 @@
 export const course = {
   id: 'bigquery-ga4',
   title: 'BigQuery × GA4：用 SQL 分析網站行為',
-  subtitle: '用熟悉的電商資料，以 GA4 視角學習核心指標、轉換漏斗與 UTM 歸因，並對照 BigQuery 的 UNNEST 寫法。',
+  subtitle: '用熟悉的電商資料，以 GA4 視角學習模擬指標、事件觸及與自訂 UTM 歸因，並對照 BigQuery 的 UNNEST 寫法。',
   level: '進階（需先完成 SQL 實戰分析課程）',
   estimatedHours: 6,
   dataset: () => import('../../datasets/ecommerce/index.js'),
@@ -15,8 +15,8 @@ export const course = {
   ],
   outcomes: [
     '理解 GA4 事件模型與 BigQuery 匯出格式，以及 UNNEST event_params 的用途',
-    '用 SQL 計算 Sessions、Users、Pageviews、跳出率等核心指標',
-    '建立完整轉換漏斗並按裝置、流量來源拆分',
+    '用 SQL 計算 模擬 Sessions、已識別會員、Pageviews 與自訂單事件率，區分 GA4 指標口徑',
+    '建立事件獨立觸及表，理解它與序列漏斗的差別',
     '用 UTM 參數串聯廣告活動與訂單，進行多通路歸因分析',
   ],
   units: [
@@ -27,12 +27,12 @@ export const course = {
     },
     {
       id: 'ga4-u02', no: 2, title: 'GA4 核心指標計算', status: 'published', access: 'free', plannedExercises: 5,
-      summary: '用 SQL 計算 Sessions、Users、Pageviews、Session 深度、跳出率等 GA4 核心指標。',
+      summary: '用 SQL 計算 Sessions、Users、Pageviews、Session 深度與自訂單事件率，說明 GA4 跳出率限制。',
       load: () => import('./units/u02-ga4-metrics/unit.js'),
     },
     {
       id: 'ga4-u03', no: 3, title: 'GA4 漏斗分析', status: 'published', access: 'free', plannedExercises: 3,
-      summary: '用 events 表建立完整轉換漏斗，並按裝置類型和流量來源拆分各階段轉換率。',
+      summary: '用 events 表建立獨立事件觸及統計，按裝置與來源拆分；不假稱序列漏斗。',
       load: () => import('./units/u03-ga4-funnels/unit.js'),
     },
     {

@@ -95,47 +95,60 @@ ORDER BY purchase_rate DESC;`,
         },
         {
           id: 'ga4.u04.l01.e03',
-          title: '各 Campaign 帶來的訂單數',
+          title: '自訂回溯窗的單一活動歸因',
           difficulty: 3,
-          scenario: '行銷主管要評估各廣告活動的實際成效，用「帶來的訂單數和營收」做為績效指標。',
-          prompt: `計算每個廣告活動（\`campaign_id\`）透過 sessions 帶來的 \`completed\` 訂單數和訂單金額。
+          scenario: '行銷主管需要可重現、且不重複加總訂單金額的教學歸因報表。',
+          prompt: `本課自訂「前 30 個完整日、最後有活動的 session」模型：同會員、completed 訂單，session 日期在訂單日往前 30 日（含）至訂單日前一日（含）；因 order_date 只有日期，不猜同日先後，排除訂單當日。只在 campaign_id 非 NULL 的候選中選 session_start 最大者，同時間以 session_id DESC 決勝。每單唯一歸屬，無候選不歸因。這不是 GA4 Last Click，也不處理匿名跨裝置、direct 規則或因果推論。
 
-串接邏輯：\`sessions.campaign_id\` → \`sessions.customer_id\` → \`orders.customer_id\`，且訂單日期（\`order_date\`）必須 >= session 開始日期（\`DATE(session_start)\`）。
-
-只計有 \`campaign_id\` 的 session（IS NOT NULL）。
-
-用 \`campaigns\` 表取得 \`campaign_name\`。
-
-回傳欄位：\`campaign_id\`、\`campaign_name\`、\`attributed_orders\`（COUNT DISTINCT order_id）、\`attributed_revenue\`（SUM total_amount，ROUND 整數），只顯示 \`attributed_orders > 0\`，依 \`attributed_revenue\` DESC 排序。`,
-          answer: `SELECT
-  s.campaign_id,
-  c.campaign_name,
-  COUNT(DISTINCT o.order_id) AS attributed_orders,
-  ROUND(SUM(o.total_amount)) AS attributed_revenue
-FROM sessions s
-JOIN campaigns c ON s.campaign_id = c.campaign_id
-JOIN orders o
-  ON  o.customer_id = s.customer_id
-  AND o.order_date >= DATE(s.session_start)
-  AND o.status = 'completed'
-WHERE s.campaign_id IS NOT NULL
-GROUP BY s.campaign_id, c.campaign_name
-HAVING COUNT(DISTINCT o.order_id) > 0
-ORDER BY attributed_revenue DESC;`,
+JOIN campaigns 取得名稱。回傳 campaign_id、campaign_name、attributed_orders（每單只計一次）、attributed_revenue（SUM total_amount，ROUND 整數）。只顯示有歸因訂單的活動，依 attributed_revenue DESC、campaign_id ASC 排序。`,
+          answer: `WITH ranked_touches AS (
+  SELECT o.order_id, o.total_amount, s.campaign_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY o.order_id
+      ORDER BY s.session_start DESC, s.session_id DESC
+    ) AS touch_rank
+  FROM orders o
+  JOIN sessions s ON s.customer_id = o.customer_id
+    AND DATE(s.session_start) >= DATE(o.order_date, '-30 days')
+    AND DATE(s.session_start) < DATE(o.order_date)
+  WHERE o.status = 'completed' AND s.campaign_id IS NOT NULL
+),
+winners AS (
+  SELECT order_id, total_amount, campaign_id
+  FROM ranked_touches WHERE touch_rank = 1
+)
+SELECT w.campaign_id, c.campaign_name,
+  COUNT(*) AS attributed_orders,
+  ROUND(SUM(w.total_amount)) AS attributed_revenue
+FROM winners w
+JOIN campaigns c ON w.campaign_id = c.campaign_id
+GROUP BY w.campaign_id, c.campaign_name
+ORDER BY attributed_revenue DESC, w.campaign_id ASC;`,
           hints: [
-            'JOIN campaigns ON campaign_id 取得名稱',
-            'JOIN orders ON customer_id，加條件 o.order_date >= DATE(s.session_start)',
-            'WHERE s.campaign_id IS NOT NULL',
-            'HAVING COUNT(DISTINCT o.order_id) > 0',
+            '先 JOIN 產生窗內候選，再 ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY session_start DESC, session_id DESC)',
+            '先 WHERE touch_rank = 1，再按 campaign 彙總；不可只對訂單數 DISTINCT 卻重複 SUM 金額',
           ],
-          explanation: `歸因邏輯：同一位會員，在點擊廣告（session 發生）之後下的訂單，才算是這個廣告帶來的。
-
-\`COUNT(DISTINCT o.order_id)\` 確保同一訂單只計一次，即使這位客戶有多個來自同一 campaign 的 session。
-
-這是「最後點擊（Last Click）歸因」的簡化版本，實務上還會考慮多觸點歸因（Linear、Data-Driven 等）。`,
+          explanation: `本課自訂「前 30 個完整日、最後有活動的 session」模型：同會員、completed 訂單，session 日期在訂單日往前 30 日（含）至訂單日前一日（含）；因 order_date 只有日期，不猜同日先後，排除訂單當日。只在 campaign_id 非 NULL 的候選中選 session_start 最大者，同時間以 session_id DESC 決勝。每單唯一歸屬，無候選不歸因。這不是 GA4 Last Click，也不處理匿名跨裝置、direct 規則或因果推論。 先挑每單唯一 winner，再 SUM，才不會同單被多個 session 或活動重複認領。SUM(DISTINCT total_amount) 也不對，因為不同訂單可以同額。ROAS 僅是此模型與選定資料期間的教學比值，不證明廣告增量效果。`,
           negatives: [
-            `SELECT s.campaign_id, c.campaign_name, COUNT(DISTINCT o.order_id) AS attributed_orders, ROUND(SUM(o.total_amount)) AS attributed_revenue FROM sessions s JOIN campaigns c ON s.campaign_id = c.campaign_id JOIN orders o ON o.customer_id = s.customer_id AND o.status = 'completed' WHERE s.campaign_id IS NOT NULL GROUP BY s.campaign_id, c.campaign_name HAVING COUNT(DISTINCT o.order_id) > 0 ORDER BY attributed_revenue DESC`,
-            `SELECT s.campaign_id, c.campaign_name, COUNT(o.order_id) AS attributed_orders, ROUND(SUM(o.total_amount)) AS attributed_revenue FROM sessions s JOIN campaigns c ON s.campaign_id = c.campaign_id JOIN orders o ON o.customer_id = s.customer_id AND o.order_date >= DATE(s.session_start) AND o.status = 'completed' WHERE s.campaign_id IS NOT NULL GROUP BY s.campaign_id, c.campaign_name HAVING COUNT(o.order_id) > 0 ORDER BY attributed_revenue DESC`,
+            `WITH ranked_touches AS (
+  SELECT o.order_id, o.total_amount, s.campaign_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY o.order_id
+      ORDER BY s.session_start DESC, s.session_id DESC
+    ) AS touch_rank
+  FROM orders o
+  JOIN sessions s ON s.customer_id = o.customer_id
+    AND DATE(s.session_start) >= DATE(o.order_date, '-30 days')
+    AND DATE(s.session_start) < DATE(o.order_date)
+  WHERE o.status = 'completed' AND s.campaign_id IS NOT NULL
+),
+winners AS (
+  SELECT order_id, total_amount, campaign_id
+  FROM ranked_touches WHERE touch_rank = 1
+)
+SELECT w.campaign_id, c.campaign_name, COUNT(*) AS attributed_orders, ROUND(SUM(w.total_amount)) AS attributed_revenue
+FROM ranked_touches w JOIN campaigns c ON w.campaign_id = c.campaign_id
+GROUP BY w.campaign_id, c.campaign_name ORDER BY attributed_revenue DESC, w.campaign_id ASC;`,
           ],
           ordered: true,
         },
