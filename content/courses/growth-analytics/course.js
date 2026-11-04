@@ -19,7 +19,7 @@ export const course = {
     '計算各渠道新用戶數、渠道品質，找出高 ROI 來源',
     '用 SQL 衡量 Onboarding 完成率與 Time-to-value',
     '實作 N-day retention 與 Rolling retention，理解兩者差異',
-    '計算 MRR、ARPU、LTV，評估方案升級機會',
+    '計算觀察 ARPU 與年化教學 proxy，辨識 MRR / LTV 資料限制',
     '分析 A/B Test 結果、轉換率提升與統計顯著性',
   ],
   units: [
@@ -40,12 +40,12 @@ export const course = {
     },
     {
       id: 'gh-u04', no: 4, title: 'Revenue：營收分析', status: 'published', access: 'free',
-      summary: 'MRR、ARPU、LTV 計算，以及方案升級（Free→Pro）的收入貢獻分析。',
+      summary: '觀察收入 ARPU、避免多表 JOIN 重複加總；年化 proxy 不等於 LTV 或 MRR。',
       load: () => import('./units/u04-revenue/unit.js'),
     },
     {
       id: 'gh-u05', no: 5, title: 'Referral：A/B Test 分析', status: 'published', access: 'free',
-      summary: 'A/B Test 轉換率差異、統計顯著性判斷、Viral coefficient 概念。',
+      summary: 'A/B Test 的描述性 Lift；無邀請關係不能估 K，以 referral 來源占比示範可用指標。',
       load: () => import('./units/u05-referral/unit.js'),
     },
   ],

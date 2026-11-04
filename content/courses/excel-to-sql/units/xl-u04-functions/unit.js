@@ -12,7 +12,7 @@ export const unit = {
       minutes: 20,
       objectives: [
         '把 Excel IF 改寫成 CASE WHEN',
-        '把 IFERROR/IFNA 改寫成 COALESCE',
+        '用 COALESCE 補 NULL，區分缺值與 IFERROR/IFNA 的錯誤處理',
         '用 || 串接文字',
       ],
       body: md('./l01.md'),
@@ -29,7 +29,7 @@ export const unit = {
             'CASE status WHEN ... THEN ... END',
             'ELSE 對應 Excel IF 的「否則」',
           ],
-          explanation: 'CASE WHEN 是 SQL 的 IF/IFS。`CASE 欄位 WHEN 值 THEN 結果 … ELSE 預設 END` 是最簡潔的寫法，等同於 Excel 的 `IFS(status="completed","已完成",status="cancelled","已取消",...)`。',
+          explanation: 'CASE WHEN 是 SQL 的 IF/IFS。`CASE 欄位 WHEN 值 THEN 結果 … ELSE 預設 END` 是最簡潔的寫法，可類比 Excel 缺城市時的顯示需求，但不能直接等同錯誤處理公式；例如 `IFS(status="completed","已完成",status="cancelled","已取消",...)`。',
           negatives: [
             "SELECT order_id, order_date, total_amount, CASE status WHEN 'completed' THEN '已完成訂單' WHEN 'cancelled' THEN '已取消' WHEN 'refunded' THEN '已退款' ELSE '處理中' END AS status_label FROM orders LIMIT 20;",
           ],
@@ -47,7 +47,7 @@ export const unit = {
             "COALESCE(city, '未填寫') — city 是 NULL 就換成「未填寫」",
             '|| 串接文字',
           ],
-          explanation: "COALESCE 是 Excel `IFERROR` 的 SQL 版：第一個不是 NULL 的值就回傳。`name || ' (' || COALESCE(city, '未填寫') || ')'` 等同於 Excel 的 `=A2&\" (\"&IFERROR(B2,\"未填寫\")&\")\"`。",
+          explanation: "COALESCE 回傳第一個非 NULL 的值，不是 IFERROR：它不捕捉 SQL 錯誤。`name || ' (' || COALESCE(city, '未填寫') || ')'` 等同於 Excel 的 `=A2&\" (\"&IFERROR(B2,\"未填寫\")&\")\"`。",
           negatives: [
             "SELECT customer_id, name || ' (' || COALESCE(city, '未填寫') || ')' AS display_name FROM customers ORDER BY customer_id DESC LIMIT 15;",
           ],

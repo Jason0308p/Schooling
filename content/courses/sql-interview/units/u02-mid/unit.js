@@ -93,7 +93,7 @@ ORDER BY cohort_month ASC;`,
 - 「如果顧客 M0 買了 3 次，M1 留存算幾次？」（只算有/沒有，不算次數）`,
           negatives: [
             `WITH first_order AS (SELECT customer_id, SUBSTR(MIN(order_date), 1, 7) AS cohort_month FROM orders GROUP BY customer_id), active_months AS (SELECT DISTINCT o.customer_id, SUBSTR(o.order_date, 1, 7) AS active_month FROM orders o WHERE o.status = 'completed'), cohort_activity AS (SELECT f.cohort_month, f.customer_id, CAST((CAST(SUBSTR(am.active_month, 1, 4) AS INT) * 12 + CAST(SUBSTR(am.active_month, 6, 2) AS INT)) - (CAST(SUBSTR(f.cohort_month, 1, 4) AS INT) * 12 + CAST(SUBSTR(f.cohort_month, 6, 2) AS INT)) AS INT) AS period FROM first_order f JOIN active_months am ON am.customer_id = f.customer_id WHERE f.cohort_month IN ('2025-07', '2025-08', '2025-09')) SELECT cohort_month, SUM(CASE WHEN period = 0 THEN 1 ELSE 0 END) AS m0_size, SUM(CASE WHEN period = 1 THEN 1 ELSE 0 END) AS m1_retained, SUM(CASE WHEN period = 2 THEN 1 ELSE 0 END) AS m2_retained, SUM(CASE WHEN period = 3 THEN 1 ELSE 0 END) AS m3_retained, ROUND(SUM(CASE WHEN period = 1 THEN 1 ELSE 0 END) * 100.0 / NULLIF(SUM(CASE WHEN period = 0 THEN 1 ELSE 0 END), 0), 1) AS m1_pct, ROUND(SUM(CASE WHEN period = 2 THEN 1 ELSE 0 END) * 100.0 / NULLIF(SUM(CASE WHEN period = 0 THEN 1 ELSE 0 END), 0), 1) AS m2_pct, ROUND(SUM(CASE WHEN period = 3 THEN 1 ELSE 0 END) * 100.0 / NULLIF(SUM(CASE WHEN period = 0 THEN 1 ELSE 0 END), 0), 1) AS m3_pct FROM cohort_activity GROUP BY cohort_month ORDER BY cohort_month ASC;`,
-            `WITH first_order AS (SELECT customer_id, SUBSTR(MIN(order_date), 1, 7) AS cohort_month FROM orders WHERE status = 'completed' GROUP BY customer_id), active_months AS (SELECT DISTINCT o.customer_id, SUBSTR(o.order_date, 1, 7) AS active_month FROM orders o WHERE o.status = 'completed'), cohort_activity AS (SELECT f.cohort_month, f.customer_id, CAST((CAST(SUBSTR(am.active_month, 1, 4) AS INT) * 12 + CAST(SUBSTR(am.active_month, 6, 2) AS INT)) - (CAST(SUBSTR(f.cohort_month, 1, 4) AS INT) * 12 + CAST(SUBSTR(f.cohort_month, 6, 2) AS INT)) AS INT) AS period FROM first_order f JOIN active_months am ON am.customer_id = f.customer_id WHERE f.cohort_month IN ('2025-07', '2025-08', '2025-09')) SELECT cohort_month, SUM(CASE WHEN period = 0 THEN 1 ELSE 0 END) AS m0_size, SUM(CASE WHEN period = 1 THEN 1 ELSE 0 END) AS m1_retained, SUM(CASE WHEN period = 2 THEN 1 ELSE 0 END) AS m2_retained, SUM(CASE WHEN period = 3 THEN 1 ELSE 0 END) AS m3_retained, ROUND(SUM(CASE WHEN period = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT f.customer_id), 1) AS m1_pct, ROUND(SUM(CASE WHEN period = 2 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT f.customer_id), 1) AS m2_pct, ROUND(SUM(CASE WHEN period = 3 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT f.customer_id), 1) AS m3_pct FROM cohort_activity GROUP BY cohort_month ORDER BY cohort_month ASC;`,
+            `WITH first_order AS (SELECT customer_id, SUBSTR(MIN(order_date), 1, 7) AS cohort_month FROM orders WHERE status = 'completed' GROUP BY customer_id), active_months AS (SELECT DISTINCT o.customer_id, SUBSTR(o.order_date, 1, 7) AS active_month FROM orders o WHERE o.status = 'completed'), cohort_activity AS (SELECT f.cohort_month, f.customer_id, CAST((CAST(SUBSTR(am.active_month, 1, 4) AS INT) * 12 + CAST(SUBSTR(am.active_month, 6, 2) AS INT)) - (CAST(SUBSTR(f.cohort_month, 1, 4) AS INT) * 12 + CAST(SUBSTR(f.cohort_month, 6, 2) AS INT)) AS INT) AS period FROM first_order f JOIN active_months am ON am.customer_id = f.customer_id WHERE f.cohort_month IN ('2025-07', '2025-08', '2025-09')) SELECT cohort_month, SUM(CASE WHEN period = 0 THEN 1 ELSE 0 END) AS m0_size, SUM(CASE WHEN period = 1 THEN 1 ELSE 0 END) AS m1_retained, SUM(CASE WHEN period = 2 THEN 1 ELSE 0 END) AS m2_retained, SUM(CASE WHEN period = 3 THEN 1 ELSE 0 END) AS m3_retained, ROUND(SUM(CASE WHEN period = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS m1_pct, ROUND(SUM(CASE WHEN period = 2 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS m2_pct, ROUND(SUM(CASE WHEN period = 3 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS m3_pct FROM cohort_activity GROUP BY cohort_month ORDER BY cohort_month ASC;`,
           ],
           ordered: true,
         },
@@ -102,7 +102,9 @@ ORDER BY cohort_month ASC;`,
           title: 'RFM 分群各組占總營收比例',
           difficulty: 3,
           scenario: '面試官說：「請用 RFM 框架，把顧客分成高價值和低價值兩組，算出每組占全體 completed 訂單總營收的比例。基準日用 2026-06-30。」',
-          prompt: `用以下 **RFM 簡化分群**，計算各群組的顧客數與占總營收比例。
+          prompt: `所有指標只讀取 order_date <= '2026-06-30' 的訂單（含截止日）。
+
+用以下 **RFM 簡化分群**，計算各群組的顧客數與占總營收比例。
 
 **RFM 定義（只計算 \`completed\` 訂單，基準日 2026-06-30）：**
 - **R（最近購買天數）**：距基準日最後一筆 completed 訂單的天數
@@ -129,7 +131,7 @@ ORDER BY cohort_month ASC;`,
     COUNT(*)                                                            AS f_count,
     SUM(total_amount)                                                   AS m_total
   FROM orders
-  WHERE status = 'completed'
+  WHERE status = 'completed' AND order_date <= '2026-06-30'
   GROUP BY customer_id
 ),
 segmented AS (
@@ -167,8 +169,8 @@ SQLite 的 \`julianday()\` 回傳儒略日（浮點），兩者相減即為天�
 **追問方向：**
 - 「你的 RFM 是用 percentile 分組嗎？還是固定閾值？各有什麼優缺點？」`,
           negatives: [
-            `WITH rfm AS (SELECT customer_id, CAST(julianday('2026-06-30') - julianday(MAX(order_date)) AS INT) AS r_days, COUNT(*) AS f_count, SUM(total_amount) AS m_total FROM orders GROUP BY customer_id), segmented AS (SELECT *, CASE WHEN r_days <= 90 AND f_count >= 5 AND m_total >= 10000 THEN 'VIP' WHEN f_count >= 3 OR m_total >= 5000 THEN '活躍' WHEN r_days > 180 THEN '沉睡' ELSE '其他' END AS segment FROM rfm) SELECT s.segment, COUNT(*) AS customer_count, ROUND(SUM(s.m_total)) AS group_revenue, ROUND(SUM(s.m_total) * 100.0 / (SELECT SUM(total_amount) FROM orders WHERE status = 'completed'), 1) AS revenue_pct FROM segmented s GROUP BY s.segment ORDER BY revenue_pct DESC;`,
-            `WITH rfm AS (SELECT customer_id, CAST(julianday('2026-06-30') - julianday(MAX(order_date)) AS INT) AS r_days, COUNT(*) AS f_count, SUM(total_amount) AS m_total FROM orders GROUP BY customer_id), segmented AS (SELECT *, CASE WHEN r_days <= 90 AND f_count >= 3 AND m_total >= 2000 THEN '高價值' ELSE '低價值' END AS segment FROM rfm), total_rev AS (SELECT SUM(m_total) AS grand_total FROM segmented) SELECT s.segment, COUNT(*) AS customer_count, ROUND(SUM(s.m_total)) AS group_revenue, ROUND(SUM(s.m_total) * 100.0 / t.grand_total, 1) AS revenue_pct FROM segmented s CROSS JOIN total_rev t GROUP BY s.segment, t.grand_total ORDER BY revenue_pct DESC;`,
+            `WITH rfm AS (SELECT customer_id, CAST(julianday('2026-06-30') - julianday(MAX(order_date)) AS INT) AS r_days, COUNT(*) AS f_count, SUM(total_amount) AS m_total FROM orders WHERE order_date <= '2026-06-30' GROUP BY customer_id), segmented AS (SELECT *, CASE WHEN r_days <= 90 AND f_count >= 5 AND m_total >= 10000 THEN 'VIP' WHEN f_count >= 3 OR m_total >= 5000 THEN '活躍' WHEN r_days > 180 THEN '沉睡' ELSE '其他' END AS segment FROM rfm) SELECT s.segment, COUNT(*) AS customer_count, ROUND(SUM(s.m_total)) AS group_revenue, ROUND(SUM(s.m_total) * 100.0 / (SELECT SUM(total_amount) FROM orders WHERE status = 'completed' AND order_date <= '2026-06-30'), 1) AS revenue_pct FROM segmented s GROUP BY s.segment ORDER BY revenue_pct DESC;`,
+            `WITH rfm AS (SELECT customer_id, CAST(julianday('2026-06-30') - julianday(MAX(order_date)) AS INT) AS r_days, COUNT(*) AS f_count, SUM(total_amount) AS m_total FROM orders WHERE order_date <= '2026-06-30' GROUP BY customer_id), segmented AS (SELECT *, CASE WHEN r_days <= 90 AND f_count >= 3 AND m_total >= 2000 THEN '高價值' ELSE '低價值' END AS segment FROM rfm), total_rev AS (SELECT SUM(m_total) AS grand_total FROM segmented) SELECT s.segment, COUNT(*) AS customer_count, ROUND(SUM(s.m_total)) AS group_revenue, ROUND(SUM(s.m_total) * 100.0 / t.grand_total, 1) AS revenue_pct FROM segmented s CROSS JOIN total_rev t GROUP BY s.segment, t.grand_total ORDER BY revenue_pct DESC;`,
           ],
           ordered: true,
         },
@@ -180,7 +182,7 @@ SQLite 的 \`julianday()\` 回傳儒略日（浮點），兩者相減即為天�
           prompt: `找出符合以下條件的會員，作為活躍忠誠計畫邀請名單。
 
 **條件（只計算 \`completed\` 訂單）：**
-- 2025-07-01 以來的 completed 訂單筆數 \`>= 3\`
+- 2025-07-01 至 2026-06-30（含兩端）的 completed 訂單筆數 \`>= 3\`
 - 最後一筆 completed 訂單距 2026-06-30 的天數 \`<= 90\`（即 order_date >= date('2026-06-30', '-90 days')）
 
 **要求：**
@@ -204,7 +206,7 @@ FROM customers c
 JOIN orders o
   ON o.customer_id = c.customer_id
  AND o.status      = 'completed'
- AND o.order_date  >= '2025-07-01'
+ AND o.order_date  >= '2025-07-01' AND o.order_date <= '2026-06-30'
 GROUP BY c.customer_id, c.name, c.email, c.membership_tier
 HAVING COUNT(o.order_id) >= 3
    AND MAX(o.order_date) >= date('2026-06-30', '-90 days')
@@ -222,8 +224,8 @@ ORDER BY days_since_last ASC;`,
 **追問方向：**
 - 「如果我要加上這些人的 lifetime value（LTV），你會怎麼延伸這個查詢？」`,
           negatives: [
-            `SELECT c.customer_id, c.name, c.email, c.membership_tier, COUNT(o.order_id) AS order_count, MAX(o.order_date) AS last_order_date, CAST(julianday('2026-06-30') - julianday(MAX(o.order_date)) AS INT) AS days_since_last FROM customers c JOIN orders o ON o.customer_id = c.customer_id AND o.status = 'completed' AND o.order_date >= '2025-07-01' GROUP BY c.customer_id, c.name, c.email, c.membership_tier HAVING COUNT(o.order_id) >= 5 AND MAX(o.order_date) >= date('2026-06-30', '-90 days') ORDER BY days_since_last ASC;`,
-            `SELECT c.customer_id, c.name, c.email, c.membership_tier, COUNT(o.order_id) AS order_count, MAX(o.order_date) AS last_order_date, CAST(julianday('2026-06-30') - julianday(MAX(o.order_date)) AS INT) AS days_since_last FROM customers c JOIN orders o ON o.customer_id = c.customer_id AND o.status = 'completed' AND o.order_date >= '2025-07-01' GROUP BY c.customer_id, c.name, c.email, c.membership_tier HAVING COUNT(o.order_id) >= 3 ORDER BY days_since_last ASC;`,
+            `SELECT c.customer_id, c.name, c.email, c.membership_tier, COUNT(o.order_id) AS order_count, MAX(o.order_date) AS last_order_date, CAST(julianday('2026-06-30') - julianday(MAX(o.order_date)) AS INT) AS days_since_last FROM customers c JOIN orders o ON o.customer_id = c.customer_id AND o.status = 'completed' AND o.order_date >= '2025-07-01' AND o.order_date <= '2026-06-30' GROUP BY c.customer_id, c.name, c.email, c.membership_tier HAVING COUNT(o.order_id) >= 5 AND MAX(o.order_date) >= date('2026-06-30', '-90 days') ORDER BY days_since_last ASC;`,
+            `SELECT c.customer_id, c.name, c.email, c.membership_tier, COUNT(o.order_id) AS order_count, MAX(o.order_date) AS last_order_date, CAST(julianday('2026-06-30') - julianday(MAX(o.order_date)) AS INT) AS days_since_last FROM customers c JOIN orders o ON o.customer_id = c.customer_id AND o.status = 'completed' AND o.order_date >= '2025-07-01' AND o.order_date <= '2026-06-30' GROUP BY c.customer_id, c.name, c.email, c.membership_tier HAVING COUNT(o.order_id) >= 3 ORDER BY days_since_last ASC;`,
           ],
           ordered: true,
         },
@@ -232,77 +234,120 @@ ORDER BY days_since_last ASC;`,
           title: '廣告活動 ROAS 分析',
           difficulty: 3,
           scenario: '這是行銷科技團隊的面試題。請計算 2025 年第四季（10–12 月）各廣告活動的 ROAS，並保留沒有歸因訂單的活動。',
-          prompt: `計算 **2025-10 ~ 2025-12** 各廣告活動的 ROAS。
+          prompt: `計算 [2025-10-01, 2026-01-01) 的廣告 ROAS。訂單日期與 spend_date 都使用此報表期間；session 回溯可跨報表起點，不另限制在同月或同季。
 
-**歸因邏輯：**
-- \`sessions.campaign_id\` → 找到活動帶來的 session
-- session 的 \`customer_id\` 不為 NULL
-- 同期間（2025-10-01 ~ 2025-12-31）有 \`completed\` 訂單的顧客，訂單計入該活動的 \`attributed_revenue\`
+本課自訂教學模型（不是 GA4 Last Click）：同會員的 completed 訂單，候選 session 必須 campaign_id 非 NULL，日期在訂單日前 30 個完整日（含第 30 日、不含訂單同日）。選 session_start 最大者，同時刻以 session_id DESC 決勝。每單只歸屬一個活動，無候選不歸因。
 
-**要求：**
-- \`total_cost\`：\`ad_spend\` 該期間的花費加總（ROUND 整數）
-- \`attributed_revenue\`：歸因訂單 \`total_amount\` 加總（ROUND 整數），沒有歸因則顯示 NULL
-- \`roas\`：attributed_revenue / total_cost，ROUND 2 位小數；沒有歸因顯示 NULL
-- 用 NULLIF 防止除以零
-- **保留**沒有歸因訂單的活動
+先每單唯一，再 SUM(total_amount)；花費獨立按活動加總，兩者皆 ROUND 整數，再以營收 * 1.0 / NULLIF(total_cost, 0) 計算 roas，ROUND 2 位。
 
-**回傳欄位：** \`campaign_name\`, \`platform\`, \`total_cost\`, \`attributed_revenue\`, \`roas\`
-
-**排序：** \`roas DESC NULLS LAST\``,
+回傳 campaign_name、platform、total_cost、attributed_revenue、roas。保留所有有花費記錄的活動；無歸因營收及 ROAS 顯示 NULL。依 roas DESC NULLS LAST、campaign_id ASC 決勝（campaign_id 不需輸出）。`,
           starter: '',
-          answer: `WITH spend AS (
-  SELECT
-    c.campaign_id,
-    c.campaign_name,
-    c.platform,
+          answer: `WITH ranked_touches AS (
+  SELECT o.order_id, o.total_amount, s.campaign_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY o.order_id
+      ORDER BY s.session_start DESC, s.session_id DESC
+    ) AS touch_rank
+  FROM orders o
+  JOIN sessions s ON s.customer_id = o.customer_id
+    AND DATE(s.session_start) >= DATE(o.order_date, '-30 days')
+    AND DATE(s.session_start) < DATE(o.order_date)
+  WHERE o.status = 'completed' AND s.campaign_id IS NOT NULL
+    AND o.order_date >= '2025-10-01' AND o.order_date < '2026-01-01'
+),
+winners AS (
+  SELECT order_id, total_amount, campaign_id
+  FROM ranked_touches WHERE touch_rank = 1
+),
+spend AS (
+  SELECT c.campaign_id, c.campaign_name, c.platform,
     ROUND(SUM(a.cost)) AS total_cost
-  FROM campaigns c
-  JOIN ad_spend a ON a.campaign_id = c.campaign_id
-  WHERE a.spend_date >= '2025-10-01'
-    AND a.spend_date <  '2026-01-01'
+  FROM campaigns c JOIN ad_spend a ON a.campaign_id = c.campaign_id
+  WHERE a.spend_date >= '2025-10-01' AND a.spend_date < '2026-01-01'
   GROUP BY c.campaign_id, c.campaign_name, c.platform
 ),
-attributed AS (
-  SELECT
-    s.campaign_id,
-    ROUND(SUM(o.total_amount)) AS attributed_revenue
-  FROM sessions s
-  JOIN orders o ON o.customer_id = s.customer_id
-  WHERE s.session_start >= '2025-10-01'
-    AND s.session_start <  '2026-01-01'
-    AND o.order_date    >= '2025-10-01'
-    AND o.order_date    <  '2026-01-01'
-    AND o.status        = 'completed'
-    AND s.customer_id   IS NOT NULL
-    AND s.campaign_id   IS NOT NULL
-  GROUP BY s.campaign_id
+revenue AS (
+  SELECT campaign_id, ROUND(SUM(total_amount)) AS attributed_revenue
+  FROM winners GROUP BY campaign_id
 )
-SELECT
-  sp.campaign_name,
-  sp.platform,
-  sp.total_cost,
-  at.attributed_revenue,
-  ROUND(at.attributed_revenue * 1.0 / NULLIF(sp.total_cost, 0), 2) AS roas
-FROM spend sp
-LEFT JOIN attributed at ON at.campaign_id = sp.campaign_id
-ORDER BY roas DESC NULLS LAST;`,
-          hints: [],
-          explanation: `**兩個 CTE 分開計算的原因：**
-花費（ad_spend）和歸因訂單（sessions → orders）是兩條不同的資料路徑，直接一次 JOIN 會產生笛卡爾積。分開算再 LEFT JOIN 是標準做法。
+SELECT sp.campaign_name, sp.platform, sp.total_cost,
+  rv.attributed_revenue AS attributed_revenue,
+  ROUND(rv.attributed_revenue * 1.0 / NULLIF(sp.total_cost, 0), 2) AS roas
+FROM spend sp LEFT JOIN revenue rv ON rv.campaign_id = sp.campaign_id
+ORDER BY roas DESC NULLS LAST, sp.campaign_id ASC;`,
+          hints: ['先在 order_id 粒度選最後有效 session，再算活動營收；花費獨立彙總後 LEFT JOIN。'],
+          explanation: `本課自訂教學模型（不是 GA4 Last Click）：同會員的 completed 訂單，候選 session 必須 campaign_id 非 NULL，日期在訂單日前 30 個完整日（含第 30 日、不含訂單同日）。選 session_start 最大者，同時刻以 session_id DESC 決勝。每單只歸屬一個活動，無候選不歸因。
 
-**LEFT JOIN 的必要性：**
-用 INNER JOIN 的話，沒有歸因訂單的活動會消失，面試官通常特別強調「要保留所有有花費的活動」。
+先決定每張訂單 winner 再加總，防止同會員多 session 膨脹營收。兩張同額訂單仍需各自計入，不能 SUM(DISTINCT total_amount)。花費先獨立聚合，避免被訂單或 session 重複乘上。跨月接觸仍可符合回溯窗；資料起點附近可能缺窗前資料。歸因不是因果證據。
 
-**常見扣分點：**
-- 忘記過濾 \`s.campaign_id IS NOT NULL\`（匿名 session 無法歸因）
-- ROAS 分子分母寫反（ROAS = Revenue / Cost，不是 Cost / Revenue）
-- 時間條件用 \`BETWEEN\`，但 BETWEEN 在字串日期是 inclusive，要確認邊界
-
-**追問方向：**
-- 「這個歸因邏輯有什麼問題？同一個顧客被多個活動的 session 觸達怎麼算？」`,
+SQLite DESC 預設已將 NULL 排最後；NULLS LAST 是明示意圖，不是修正預設。相同 ROAS 以 campaign_id ASC 決勝。`,
           negatives: [
-            `WITH spend AS (SELECT c.campaign_id, c.campaign_name, c.platform, ROUND(SUM(a.cost)) AS total_cost FROM campaigns c JOIN ad_spend a ON a.campaign_id = c.campaign_id WHERE a.spend_date >= '2025-10-01' AND a.spend_date < '2026-01-01' GROUP BY c.campaign_id, c.campaign_name, c.platform), attributed AS (SELECT s.campaign_id, ROUND(SUM(o.total_amount)) AS attributed_revenue FROM sessions s JOIN orders o ON o.customer_id = s.customer_id WHERE s.session_start >= '2025-10-01' AND s.session_start < '2026-01-01' AND o.order_date >= '2025-10-01' AND o.order_date < '2026-01-01' AND o.status = 'completed' AND s.customer_id IS NOT NULL AND s.campaign_id IS NOT NULL GROUP BY s.campaign_id) SELECT sp.campaign_name, sp.platform, sp.total_cost, at.attributed_revenue, ROUND(sp.total_cost * 1.0 / NULLIF(at.attributed_revenue, 0), 2) AS roas FROM spend sp LEFT JOIN attributed at ON at.campaign_id = sp.campaign_id ORDER BY roas DESC NULLS LAST;`,
-            `WITH spend AS (SELECT c.campaign_id, c.campaign_name, c.platform, ROUND(SUM(a.cost)) AS total_cost FROM campaigns c JOIN ad_spend a ON a.campaign_id = c.campaign_id WHERE a.spend_date >= '2025-10-01' AND a.spend_date < '2026-01-01' GROUP BY c.campaign_id, c.campaign_name, c.platform), attributed AS (SELECT s.campaign_id, ROUND(SUM(o.total_amount)) AS attributed_revenue FROM sessions s JOIN orders o ON o.customer_id = s.customer_id WHERE s.session_start >= '2025-10-01' AND s.session_start < '2026-01-01' AND o.order_date >= '2025-10-01' AND o.order_date < '2026-01-01' AND o.status = 'completed' AND s.customer_id IS NOT NULL AND s.campaign_id IS NOT NULL GROUP BY s.campaign_id) SELECT sp.campaign_name, sp.platform, sp.total_cost, at.attributed_revenue, ROUND(sp.total_cost * 1.0 / NULLIF(at.attributed_revenue, 0), 2) AS roas FROM spend sp LEFT JOIN attributed at ON at.campaign_id = sp.campaign_id ORDER BY roas DESC NULLS LAST;`,
+            `WITH ranked_touches AS (
+  SELECT o.order_id, o.total_amount, s.campaign_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY o.order_id
+      ORDER BY s.session_start DESC, s.session_id DESC
+    ) AS touch_rank
+  FROM orders o
+  JOIN sessions s ON s.customer_id = o.customer_id
+    AND DATE(s.session_start) >= DATE(o.order_date, '-30 days')
+    AND DATE(s.session_start) < DATE(o.order_date)
+  WHERE o.status = 'completed' AND s.campaign_id IS NOT NULL
+    AND o.order_date >= '2025-10-01' AND o.order_date < '2026-01-01'
+),
+winners AS (
+  SELECT order_id, total_amount, campaign_id
+  FROM ranked_touches
+),
+spend AS (
+  SELECT c.campaign_id, c.campaign_name, c.platform,
+    ROUND(SUM(a.cost)) AS total_cost
+  FROM campaigns c JOIN ad_spend a ON a.campaign_id = c.campaign_id
+  WHERE a.spend_date >= '2025-10-01' AND a.spend_date < '2026-01-01'
+  GROUP BY c.campaign_id, c.campaign_name, c.platform
+),
+revenue AS (
+  SELECT campaign_id, ROUND(SUM(total_amount)) AS attributed_revenue
+  FROM winners GROUP BY campaign_id
+)
+SELECT sp.campaign_name, sp.platform, sp.total_cost,
+  rv.attributed_revenue AS attributed_revenue,
+  ROUND(rv.attributed_revenue * 1.0 / NULLIF(sp.total_cost, 0), 2) AS roas
+FROM spend sp LEFT JOIN revenue rv ON rv.campaign_id = sp.campaign_id
+ORDER BY roas DESC NULLS LAST, sp.campaign_id ASC;`,
+            `WITH ranked_touches AS (
+  SELECT o.order_id, o.total_amount, s.campaign_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY o.order_id
+      ORDER BY s.session_start DESC, s.session_id DESC
+    ) AS touch_rank
+  FROM orders o
+  JOIN sessions s ON s.customer_id = o.customer_id
+    AND DATE(s.session_start) >= DATE(o.order_date, '-30 days')
+    AND DATE(s.session_start) < DATE(o.order_date)
+  WHERE o.status = 'completed' AND s.campaign_id IS NOT NULL
+    AND o.order_date >= '2025-10-01' AND o.order_date < '2026-01-01'
+),
+winners AS (
+  SELECT order_id, total_amount, campaign_id
+  FROM ranked_touches WHERE touch_rank = 1
+),
+spend AS (
+  SELECT c.campaign_id, c.campaign_name, c.platform,
+    ROUND(SUM(a.cost)) AS total_cost
+  FROM campaigns c JOIN ad_spend a ON a.campaign_id = c.campaign_id
+  WHERE a.spend_date >= '2025-10-01' AND a.spend_date < '2026-01-01'
+  GROUP BY c.campaign_id, c.campaign_name, c.platform
+),
+revenue AS (
+  SELECT campaign_id, ROUND(SUM(total_amount) * 2) AS attributed_revenue
+  FROM winners GROUP BY campaign_id
+)
+SELECT sp.campaign_name, sp.platform, sp.total_cost,
+  rv.attributed_revenue AS attributed_revenue,
+  ROUND(rv.attributed_revenue * 1.0 / NULLIF(sp.total_cost, 0), 2) AS roas
+FROM spend sp LEFT JOIN revenue rv ON rv.campaign_id = sp.campaign_id
+ORDER BY roas DESC NULLS LAST, sp.campaign_id ASC;`,
           ],
           ordered: true,
         },

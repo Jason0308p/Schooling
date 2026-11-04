@@ -124,12 +124,7 @@ ORDER BY order_count DESC;`,
 
 雖然寫起來有點重複，但邏輯是正確的——L03 會介紹 CTE，可以大幅簡化這種重複。`,
           negatives: [
-            `-- 錯誤：直接對 orders 算 AVG(COUNT(*)) 會報錯（不能對聚合函數再聚合）
-SELECT customer_id, COUNT(*) AS order_count
-FROM orders
-WHERE status = 'completed'
-GROUP BY customer_id
-HAVING COUNT(*) > (SELECT AVG(COUNT(*)) FROM orders WHERE status = 'completed' GROUP BY customer_id);`,
+            `SELECT customer_id, COUNT(*) AS order_count FROM orders WHERE status = 'completed' GROUP BY customer_id HAVING COUNT(*) > (SELECT AVG(total_amount) FROM orders WHERE status = 'completed') ORDER BY order_count DESC;`,
           ],
           mistakes: [],
           ordered: true,

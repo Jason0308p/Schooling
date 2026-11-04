@@ -36,7 +36,7 @@ export const course = {
     },
     {
       id: 'xl-u04', no: 4, title: 'Excel 常用函數 = SQL 函數', status: 'published', access: 'free', plannedExercises: 2,
-      summary: 'IF → CASE WHEN、IFERROR → COALESCE、CONCATENATE → ||：一對一翻譯。',
+      summary: 'IF → CASE WHEN、缺值補全 → COALESCE、CONCATENATE → ||；區分 NULL 與公式錯誤。',
       load: () => import('./units/xl-u04-functions/unit.js'),
     },
   ],

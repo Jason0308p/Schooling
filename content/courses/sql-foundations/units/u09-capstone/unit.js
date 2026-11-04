@@ -236,75 +236,119 @@ ORDER BY total_cost DESC`
           title: '廣告活動 ROAS 計算',
           difficulty: 3,
           scenario: '主管要看 2025 年 11 月各廣告活動的 ROAS（廣告帶來的訂單營收 ÷ 廣告花費），ROAS 高的排前面，沒有歸因訂單的活動也要顯示。',
-          prompt: `計算 2025-11 月各廣告活動的 ROAS。
+          prompt: `計算 [2025-11-01, 2025-12-01) 的廣告 ROAS。訂單日期與 spend_date 都使用此報表期間；session 回溯可跨報表起點，不另限制在同月或同季。
 
-**歸因邏輯：**
-- 透過 \`sessions.campaign_id\` 找到活動帶來的 session
-- session 的 \`customer_id\` 不為 NULL
-- 同月（2025-11）有 \`completed\` 訂單的顧客，其訂單計入該活動的 \`attributed_revenue\`
+本課自訂教學模型（不是 GA4 Last Click）：同會員的 completed 訂單，候選 session 必須 campaign_id 非 NULL，日期在訂單日前 30 個完整日（含第 30 日、不含訂單同日）。選 session_start 最大者，同時刻以 session_id DESC 決勝。每單只歸屬一個活動，無候選不歸因。
 
-**要求：**
-- \`total_cost\`：從 \`ad_spend\`，spend_date 在 2025-11，ROUND 整數
-- \`attributed_revenue\`：歸因訂單 \`total_amount\` 加總，ROUND 整數
-- \`roas\`：attributed_revenue / total_cost，ROUND 2 位小數
-- 用 \`NULLIF\` 防止除以零
-- 沒有歸因訂單的活動也要出現（ROAS 顯示 NULL）
+先每單唯一，再 SUM(total_amount)；花費獨立按活動加總，兩者皆 ROUND 整數，再以營收 * 1.0 / NULLIF(total_cost, 0) 計算 roas，ROUND 2 位。
 
-**回傳欄位：** \`campaign_name\`, \`platform\`, \`total_cost\`, \`attributed_revenue\`, \`roas\`
-
-**排序：** \`roas DESC NULLS LAST\``,
-          answer: `WITH spend AS (
-  SELECT
-    c.campaign_id,
-    c.campaign_name,
-    c.platform,
+回傳 campaign_name、platform、total_cost、attributed_revenue、roas。保留所有有花費記錄的活動；無歸因營收及 ROAS 顯示 NULL。依 roas DESC NULLS LAST、campaign_id ASC 決勝（campaign_id 不需輸出）。`,
+          answer: `WITH ranked_touches AS (
+  SELECT o.order_id, o.total_amount, s.campaign_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY o.order_id
+      ORDER BY s.session_start DESC, s.session_id DESC
+    ) AS touch_rank
+  FROM orders o
+  JOIN sessions s ON s.customer_id = o.customer_id
+    AND DATE(s.session_start) >= DATE(o.order_date, '-30 days')
+    AND DATE(s.session_start) < DATE(o.order_date)
+  WHERE o.status = 'completed' AND s.campaign_id IS NOT NULL
+    AND o.order_date >= '2025-11-01' AND o.order_date < '2025-12-01'
+),
+winners AS (
+  SELECT order_id, total_amount, campaign_id
+  FROM ranked_touches WHERE touch_rank = 1
+),
+spend AS (
+  SELECT c.campaign_id, c.campaign_name, c.platform,
     ROUND(SUM(a.cost)) AS total_cost
-  FROM campaigns c
-  JOIN ad_spend a ON c.campaign_id = a.campaign_id
-  WHERE a.spend_date >= '2025-11-01'
-    AND a.spend_date <  '2025-12-01'
+  FROM campaigns c JOIN ad_spend a ON a.campaign_id = c.campaign_id
+  WHERE a.spend_date >= '2025-11-01' AND a.spend_date < '2025-12-01'
   GROUP BY c.campaign_id, c.campaign_name, c.platform
 ),
-attributed AS (
-  SELECT
-    s.campaign_id,
-    ROUND(SUM(o.total_amount)) AS attributed_revenue
-  FROM sessions s
-  JOIN orders   o ON o.customer_id = s.customer_id
-  WHERE s.session_start >= '2025-11-01'
-    AND s.session_start <  '2025-12-01'
-    AND o.order_date    >= '2025-11-01'
-    AND o.order_date    <  '2025-12-01'
-    AND o.status = 'completed'
-    AND s.campaign_id IS NOT NULL
-  GROUP BY s.campaign_id
+revenue AS (
+  SELECT campaign_id, ROUND(SUM(total_amount)) AS attributed_revenue
+  FROM winners GROUP BY campaign_id
 )
-SELECT
-  sp.campaign_name,
-  sp.platform,
-  sp.total_cost,
-  at.attributed_revenue,
-  ROUND(at.attributed_revenue * 1.0 / NULLIF(sp.total_cost, 0), 2) AS roas
-FROM spend sp
-LEFT JOIN attributed at ON sp.campaign_id = at.campaign_id
-ORDER BY roas DESC NULLS LAST;`,
-          hints: [
-            '用兩個 CTE：一個算花費，一個算歸因營收',
-            '歸因 CTE：sessions JOIN orders ON customer_id，再過濾 campaign_id IS NOT NULL',
-            '最後用 LEFT JOIN 確保所有有花費的活動都出現，NULLIF(total_cost, 0) 避免除以零',
-          ],
-          explanation: `**為何要用兩個 CTE？**
+SELECT sp.campaign_name, sp.platform, sp.total_cost,
+  rv.attributed_revenue AS attributed_revenue,
+  ROUND(rv.attributed_revenue * 1.0 / NULLIF(sp.total_cost, 0), 2) AS roas
+FROM spend sp LEFT JOIN revenue rv ON rv.campaign_id = sp.campaign_id
+ORDER BY roas DESC NULLS LAST, sp.campaign_id ASC;`,
+          hints: ['先在 order_id 粒度選最後有效 session，再算活動營收；花費獨立彙總後 LEFT JOIN。'],
+          explanation: `本課自訂教學模型（不是 GA4 Last Click）：同會員的 completed 訂單，候選 session 必須 campaign_id 非 NULL，日期在訂單日前 30 個完整日（含第 30 日、不含訂單同日）。選 session_start 最大者，同時刻以 session_id DESC 決勝。每單只歸屬一個活動，無候選不歸因。
 
-花費和歸因訂單來自不同的資料路徑，強行一次 JOIN 會造成笛卡爾積（同一筆 session 對應多筆 ad_spend 記錄）。分開計算再合併是標準做法。
+先決定每張訂單 winner 再加總，防止同會員多 session 膨脹營收。兩張同額訂單仍需各自計入，不能 SUM(DISTINCT total_amount)。花費先獨立聚合，避免被訂單或 session 重複乘上。跨月接觸仍可符合回溯窗；資料起點附近可能缺窗前資料。歸因不是因果證據。
 
-**歸因的限制：**
-這裡的邏輯是「同月有該活動 session 的顧客，同月的訂單都算入」。實際上可能高估（顧客本來就要買），也可能低估（顧客跨月才下單）。報告時要說明歸因方法。
-
-**NULLS LAST：**
-SQLite 的 \`ORDER BY ... DESC\` 預設把 NULL 排在最前，加 \`NULLS LAST\` 讓有效 ROAS 排前面，NULL 排後面。`,
+SQLite DESC 預設已將 NULL 排最後；NULLS LAST 是明示意圖，不是修正預設。相同 ROAS 以 campaign_id ASC 決勝。`,
           negatives: [
-            `WITH spend AS (SELECT c.campaign_id, c.campaign_name, c.platform, ROUND(SUM(a.cost)) AS total_cost FROM campaigns c JOIN ad_spend a ON c.campaign_id = a.campaign_id WHERE a.spend_date >= '2025-11-01' AND a.spend_date < '2025-12-01' GROUP BY c.campaign_id, c.campaign_name, c.platform), attributed AS (SELECT s.campaign_id, ROUND(SUM(o.total_amount)) AS attributed_revenue FROM sessions s JOIN orders o ON o.customer_id = s.customer_id WHERE s.session_start >= '2025-11-01' AND s.session_start < '2025-12-01' AND o.order_date >= '2025-11-01' AND o.order_date < '2025-12-01' AND o.status = 'completed' AND s.campaign_id IS NOT NULL GROUP BY s.campaign_id) SELECT sp.campaign_name, sp.platform, sp.total_cost, at.attributed_revenue, ROUND(sp.total_cost / NULLIF(at.attributed_revenue, 0), 2) AS roas FROM spend sp LEFT JOIN attributed at ON sp.campaign_id = at.campaign_id ORDER BY roas DESC NULLS LAST;`,
-            `WITH spend AS (SELECT c.campaign_id, c.campaign_name, c.platform, ROUND(SUM(a.cost)) AS total_cost FROM campaigns c JOIN ad_spend a ON c.campaign_id = a.campaign_id WHERE a.spend_date >= '2025-11-01' AND a.spend_date < '2025-12-01' GROUP BY c.campaign_id, c.campaign_name, c.platform), attributed AS (SELECT s.campaign_id, ROUND(SUM(o.total_amount)) AS attributed_revenue FROM sessions s JOIN orders o ON o.customer_id = s.customer_id WHERE s.session_start >= '2025-11-01' AND s.session_start < '2025-12-01' AND o.order_date >= '2025-11-01' AND o.order_date < '2025-12-01' AND o.status = 'completed' AND s.campaign_id IS NOT NULL GROUP BY s.campaign_id) SELECT sp.campaign_name, sp.platform, sp.total_cost, at.attributed_revenue, ROUND(at.attributed_revenue * 1.0 / NULLIF(sp.total_cost, 0), 2) AS roas FROM spend sp JOIN attributed at ON sp.campaign_id = at.campaign_id ORDER BY roas DESC NULLS LAST;`,
+            `WITH ranked_touches AS (
+  SELECT o.order_id, o.total_amount, s.campaign_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY o.order_id
+      ORDER BY s.session_start DESC, s.session_id DESC
+    ) AS touch_rank
+  FROM orders o
+  JOIN sessions s ON s.customer_id = o.customer_id
+    AND DATE(s.session_start) >= DATE(o.order_date, '-30 days')
+    AND DATE(s.session_start) < DATE(o.order_date)
+  WHERE o.status <> 'completed' AND s.campaign_id IS NOT NULL
+    AND o.order_date >= '2025-11-01' AND o.order_date < '2025-12-01'
+),
+winners AS (
+  SELECT order_id, total_amount, campaign_id
+  FROM ranked_touches WHERE touch_rank = 1
+),
+spend AS (
+  SELECT c.campaign_id, c.campaign_name, c.platform,
+    ROUND(SUM(a.cost)) AS total_cost
+  FROM campaigns c JOIN ad_spend a ON a.campaign_id = c.campaign_id
+  WHERE a.spend_date >= '2025-11-01' AND a.spend_date < '2025-12-01'
+  GROUP BY c.campaign_id, c.campaign_name, c.platform
+),
+revenue AS (
+  SELECT campaign_id, ROUND(SUM(total_amount)) AS attributed_revenue
+  FROM winners GROUP BY campaign_id
+)
+SELECT sp.campaign_name, sp.platform, sp.total_cost,
+  rv.attributed_revenue AS attributed_revenue,
+  ROUND(rv.attributed_revenue * 1.0 / NULLIF(sp.total_cost, 0), 2) AS roas
+FROM spend sp LEFT JOIN revenue rv ON rv.campaign_id = sp.campaign_id
+ORDER BY roas DESC NULLS LAST, sp.campaign_id ASC;`,
+            `WITH ranked_touches AS (
+  SELECT o.order_id, o.total_amount, s.campaign_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY o.order_id
+      ORDER BY s.session_start DESC, s.session_id DESC
+    ) AS touch_rank
+  FROM orders o
+  JOIN sessions s ON s.customer_id = o.customer_id
+    AND DATE(s.session_start) >= DATE(o.order_date, '-30 days')
+    AND DATE(s.session_start) < DATE(o.order_date)
+  WHERE o.status = 'completed' AND s.campaign_id IS NOT NULL
+    AND o.order_date >= '2025-11-01' AND o.order_date < '2025-12-01'
+),
+winners AS (
+  SELECT order_id, total_amount, campaign_id
+  FROM ranked_touches WHERE touch_rank = 1
+),
+spend AS (
+  SELECT c.campaign_id, c.campaign_name, c.platform,
+    ROUND(SUM(a.cost)) AS total_cost
+  FROM campaigns c JOIN ad_spend a ON a.campaign_id = c.campaign_id
+  WHERE a.spend_date >= '2025-11-01' AND a.spend_date < '2025-12-01'
+  GROUP BY c.campaign_id, c.campaign_name, c.platform
+),
+revenue AS (
+  SELECT campaign_id, ROUND(SUM(total_amount) * 2) AS attributed_revenue
+  FROM winners GROUP BY campaign_id
+)
+SELECT sp.campaign_name, sp.platform, sp.total_cost,
+  rv.attributed_revenue AS attributed_revenue,
+  ROUND(rv.attributed_revenue * 1.0 / NULLIF(sp.total_cost, 0), 2) AS roas
+FROM spend sp LEFT JOIN revenue rv ON rv.campaign_id = sp.campaign_id
+ORDER BY roas DESC NULLS LAST, sp.campaign_id ASC;`,
           ],
           ordered: true,
         },
@@ -371,16 +415,20 @@ JOIN orders o ON o.customer_id = c.customer_id
   AND o.status = 'completed'
 GROUP BY c.customer_id, c.name, c.email
 ORDER BY total_spent DESC`,
-            `SELECT c.customer_id, c.name, c.email,
-  MAX(o.order_date) AS last_order_date,
-  ROUND(SUM(o.total_amount)) AS total_spent
+            `SELECT
+  c.customer_id,
+  c.name,
+  c.email,
+  MAX(o.order_date)           AS last_order_date,
+  ROUND(SUM(o.total_amount))  AS total_spent
 FROM customers c
-JOIN orders o ON o.customer_id = c.customer_id
-  AND o.status = 'completed'
-WHERE MAX(o.order_date) < '2026-06-01'
+JOIN orders o
+  ON o.customer_id = c.customer_id
+ AND o.status = 'completed'
 GROUP BY c.customer_id, c.name, c.email
-HAVING total_spent > 1000
-ORDER BY total_spent DESC`
+HAVING MAX(o.order_date) >= '2026-06-01'
+   AND ROUND(SUM(o.total_amount)) > 1000
+ORDER BY total_spent DESC;`,
           ],
           ordered: true,
         },
@@ -391,7 +439,7 @@ ORDER BY total_spent DESC`
           scenario: '行銷主管說：「只要過去 90 天有買、但近 30 天沒買的人，這批人最容易被喚回。」以 2026-06-30 為截止日。',
           prompt: `找出「過去 90 天有 completed 訂單，但近 30 天沒有 completed 訂單」的會員。
 
-**日期定義（基準日：2026-06-30）：**
+**日期定義（基準日：2026-06-30；以下兩個期間均含截止日且 order_date <= 2026-06-30）：**
 - 過去 90 天：\`order_date >= date('2026-06-30', '-89 days')\`
 - 近 30 天：\`order_date >= date('2026-06-30', '-29 days')\`
 
@@ -411,13 +459,13 @@ FROM customers c
 JOIN orders o
   ON o.customer_id = c.customer_id
  AND o.status      = 'completed'
- AND o.order_date  >= date('2026-06-30', '-89 days')
+ AND o.order_date  >= date('2026-06-30', '-89 days') AND o.order_date <= '2026-06-30'
 WHERE NOT EXISTS (
   SELECT 1
   FROM orders recent
   WHERE recent.customer_id = c.customer_id
     AND recent.status      = 'completed'
-    AND recent.order_date  >= date('2026-06-30', '-29 days')
+    AND recent.order_date  >= date('2026-06-30', '-29 days') AND recent.order_date <= '2026-06-30'
 )
 GROUP BY c.customer_id, c.name, c.email
 ORDER BY last_order_date DESC;`,
@@ -443,8 +491,8 @@ ORDER BY last_order_date DESC;`,
 FROM customers c
 JOIN orders o ON o.customer_id = c.customer_id
   AND o.status = 'completed'
-  AND o.order_date >= date('2026-06-30', '-89 days')
-WHERE o.order_date >= date('2026-06-30', '-29 days')
+  AND o.order_date >= date('2026-06-30', '-89 days') AND o.order_date <= '2026-06-30'
+WHERE o.order_date >= date('2026-06-30', '-29 days') AND o.order_date <= '2026-06-30'
 GROUP BY c.customer_id, c.name, c.email
 ORDER BY last_order_date DESC`,
             `SELECT c.customer_id, c.name, c.email,
@@ -452,7 +500,7 @@ ORDER BY last_order_date DESC`,
 FROM customers c
 JOIN orders o ON o.customer_id = c.customer_id
   AND o.status = 'completed'
-  AND o.order_date >= date('2026-06-30', '-89 days')
+  AND o.order_date >= date('2026-06-30', '-89 days') AND o.order_date <= '2026-06-30'
 GROUP BY c.customer_id, c.name, c.email
 ORDER BY last_order_date DESC`
           ],

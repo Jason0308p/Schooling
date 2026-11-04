@@ -317,7 +317,7 @@ ORDER BY count DESC;`,
           ],
           explanation:
             '函數可以巢狀：`REPLACE(COALESCE(city, \'未知\'), \'臺北市\', \'台北市\')` 先處理 NULL，再做取代。\n\n' +
-            '`GROUP BY` 必須包含和 `SELECT` 相同的運算式——BigQuery 不支援在 `GROUP BY` 用別名，所以養成重複寫運算式的習慣最保險。',
+            'BigQuery 支援 `GROUP BY` 使用 SELECT 別名；但本題別名 city 與原始欄位同名，SQLite 的 `GROUP BY city` 會指向原始欄位。明寫清理運算式，或改用不撞名的別名，才能確保清理後合併。',
           negatives: [
             `SELECT REPLACE(COALESCE(city, '未知'), '臺北市', '台北市') AS city, COUNT(*) AS count FROM customers GROUP BY city ORDER BY count DESC;`,
           ],

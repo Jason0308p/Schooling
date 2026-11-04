@@ -22,9 +22,9 @@ export const unit = {
           title: '訂單帶出會員名稱',
           difficulty: 1,
           scenario: '客服主管：「訂單表裡只有 customer_id，我需要知道每張訂單是誰下的，把名字也帶出來。」',
-          prompt: '把 `orders` 和 `customers` 用 `customer_id` 串起來，取出 `order_id`、`order_date`、`customers.name`、`total_amount`，只看 `status = \'completed\'` 的訂單，依 `order_date` 降冪排序，只取前 10 筆。',
+          prompt: '把 `orders` 和 `customers` 用 `customer_id` 串起來，取出 `order_id`、`order_date`、`customers.name`、`total_amount`，只看 `status = \'completed\'` 的訂單，依 `order_date` 降冪、同日期依 `order_id` 升冪排序，只取前 10 筆。',
           starter: '',
-          answer: "SELECT o.order_id, o.order_date, c.name, o.total_amount\nFROM orders o\nJOIN customers c ON o.customer_id = c.customer_id\nWHERE o.status = 'completed'\nORDER BY o.order_date DESC\nLIMIT 10;",
+          answer: "SELECT o.order_id, o.order_date, c.name, o.total_amount\nFROM orders o\nJOIN customers c ON o.customer_id = c.customer_id\nWHERE o.status = 'completed'\nORDER BY o.order_date DESC, o.order_id ASC\nLIMIT 10;",
           ordered: true,
           hints: [
             'JOIN customers c ON o.customer_id = c.customer_id',
@@ -40,9 +40,9 @@ export const unit = {
           title: '訂單明細帶出商品名稱',
           difficulty: 2,
           scenario: '財務：「我需要每筆訂單明細的商品名稱、數量、單價，方便對帳。」',
-          prompt: '把 `order_items` 和 `products` 用 `product_id` 串起來，取出 `order_id`、`products.product_name`、`order_items.quantity`、`order_items.unit_price`，依 `order_id` 升冪排序，只取前 15 筆。',
+          prompt: '把 `order_items` 和 `products` 用 `product_id` 串起來，取出 `order_id`、`products.product_name`、`order_items.quantity`、`order_items.unit_price`，依 `order_id`、同訂單依 `order_item_id` 升冪排序，只取前 15 筆。',
           starter: '',
-          answer: 'SELECT oi.order_id, p.product_name, oi.quantity, oi.unit_price\nFROM order_items oi\nJOIN products p ON oi.product_id = p.product_id\nORDER BY oi.order_id\nLIMIT 15;',
+          answer: 'SELECT oi.order_id, p.product_name, oi.quantity, oi.unit_price\nFROM order_items oi\nJOIN products p ON oi.product_id = p.product_id\nORDER BY oi.order_id, oi.order_item_id\nLIMIT 15;',
           ordered: true,
           hints: [
             'FROM order_items oi JOIN products p ON oi.product_id = p.product_id',

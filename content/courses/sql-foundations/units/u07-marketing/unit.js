@@ -186,7 +186,34 @@ ORDER BY month ASC, customer_type ASC;`,
           ],
           explanation: `\`ROW_NUMBER()\` 為每位會員的訂單依時間順序編號，\`rn = 1\` 就是首購。注意 \`WHERE status = 'completed'\` 要在視窗函數計算前就過濾，否則退款訂單可能搶先佔據 rn=1 的位置。`,
           negatives: [
-            `WITH ranked AS (SELECT customer_id, order_id, order_date, total_amount, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date) AS rn FROM orders) SELECT strftime('%Y-%m', order_date) AS month, CASE WHEN rn = 1 THEN '新客' ELSE '回購' END AS customer_type, COUNT(*) AS order_count, ROUND(SUM(total_amount)) AS revenue FROM ranked WHERE status = 'completed' GROUP BY month, customer_type ORDER BY month ASC, customer_type ASC`,
+            `WITH ranked AS (
+  SELECT
+    customer_id,
+    order_id,
+    order_date,
+    total_amount,
+    ROW_NUMBER() OVER (
+      PARTITION BY customer_id
+      ORDER BY order_date, order_id
+    ) AS rn
+  FROM orders
+  WHERE status <> 'completed'
+),
+labeled AS (
+  SELECT
+    strftime('%Y-%m', order_date) AS month,
+    CASE WHEN rn = 1 THEN '新客' ELSE '回購' END AS customer_type,
+    total_amount
+  FROM ranked
+)
+SELECT
+  month,
+  customer_type,
+  COUNT(*) AS order_count,
+  ROUND(SUM(total_amount)) AS revenue
+FROM labeled
+GROUP BY month, customer_type
+ORDER BY month ASC, customer_type ASC;`,
             `WITH first_orders AS (SELECT customer_id, MIN(order_date) AS first_date FROM orders WHERE status = 'completed' GROUP BY customer_id) SELECT strftime('%Y-%m', o.order_date) AS month, CASE WHEN o.order_date = f.first_date THEN '新客' ELSE '回購' END AS customer_type, COUNT(*) AS order_count, ROUND(SUM(o.total_amount)) AS revenue FROM orders o JOIN first_orders f ON o.customer_id = f.customer_id WHERE o.status = 'completed' GROUP BY month, customer_type ORDER BY month ASC, customer_type ASC`,
           ],
           ordered: true,
@@ -264,7 +291,9 @@ LIMIT 20;`,
           title: '計算每位會員的 RFM',
           difficulty: 2,
           scenario: '行銷分析師要為 CRM 系統準備 RFM 基礎資料，方便後續行銷活動的精準分眾。',
-          prompt: `計算每位有 \`completed\` 訂單的會員的 RFM 指標：
+          prompt: `所有指標只讀取 order_date <= '2026-06-30' 的訂單（含截止日）。
+
+計算每位有 \`completed\` 訂單的會員的 RFM 指標：
 
 - \`recency\`：距 2026-06-30 的天數（\`julianday\` 差，\`CAST\` 為整數）
 - \`frequency\`：completed 訂單數
@@ -277,7 +306,7 @@ LIMIT 20;`,
   COUNT(DISTINCT order_id) AS frequency,
   ROUND(SUM(total_amount)) AS monetary
 FROM orders
-WHERE status = 'completed'
+WHERE status = 'completed' AND order_date <= '2026-06-30'
 GROUP BY customer_id
 ORDER BY monetary DESC
 LIMIT 20;`,
@@ -288,8 +317,8 @@ LIMIT 20;`,
           ],
           explanation: `\`julianday\` 是 SQLite 計算日期差的標準做法。\`MAX(order_date)\` 取最後一筆訂單日期，用基準日減去它就是 Recency。\`COUNT(DISTINCT order_id)\` 確保即使同一訂單有多筆 order_items 也不會重複計算。`,
           negatives: [
-            `SELECT customer_id, CAST(julianday('2026-06-30') - julianday(MIN(order_date)) AS INTEGER) AS recency, COUNT(order_id) AS frequency, ROUND(SUM(total_amount)) AS monetary FROM orders WHERE status = 'completed' GROUP BY customer_id ORDER BY monetary DESC LIMIT 20`,
-            `SELECT customer_id, CAST(julianday('2026-06-30') - julianday(MAX(order_date)) AS INTEGER) AS recency, COUNT(DISTINCT order_id) AS frequency, ROUND(SUM(total_amount)) AS monetary FROM orders GROUP BY customer_id ORDER BY monetary DESC LIMIT 20`,
+            `SELECT customer_id, CAST(julianday('2026-06-30') - julianday(MIN(order_date)) AS INTEGER) AS recency, COUNT(order_id) AS frequency, ROUND(SUM(total_amount)) AS monetary FROM orders WHERE status = 'completed' AND order_date <= '2026-06-30' GROUP BY customer_id ORDER BY monetary DESC LIMIT 20`,
+            `SELECT customer_id, CAST(julianday('2026-06-30') - julianday(MAX(order_date)) AS INTEGER) AS recency, COUNT(DISTINCT order_id) AS frequency, ROUND(SUM(total_amount)) AS monetary FROM orders WHERE order_date <= '2026-06-30' GROUP BY customer_id ORDER BY monetary DESC LIMIT 20`,
           ],
           ordered: true,
         },
@@ -298,7 +327,9 @@ LIMIT 20;`,
           title: 'RFM 分群統計',
           difficulty: 3,
           scenario: '行銷主管想知道各客戶分群的人數分佈和平均消費，以便規劃不同群體的行銷預算。',
-          prompt: `在 RFM 基礎上，用 \`CASE WHEN\` 分群（**條件依序判斷，先符合先套用**）：
+          prompt: `所有指標只讀取 order_date <= '2026-06-30' 的訂單（含截止日）。
+
+在 RFM 基礎上，用 \`CASE WHEN\` 分群（**條件依序判斷，先符合先套用**）：
 
 - **VIP**：frequency >= 5 且 monetary >= 10000
 - **活躍**：frequency >= 3 或 monetary >= 5000
@@ -315,7 +346,7 @@ LIMIT 20;`,
     COUNT(DISTINCT order_id) AS frequency,
     ROUND(SUM(total_amount)) AS monetary
   FROM orders
-  WHERE status = 'completed'
+  WHERE status = 'completed' AND order_date <= '2026-06-30'
   GROUP BY customer_id
 ),
 segmented AS (
@@ -347,7 +378,7 @@ ORDER BY customer_count DESC;`,
 
 兩個 CTE 的設計讓程式碼更清晰：第一層算指標，第二層做分群，最後一層做彙總統計。`,
           negatives: [
-            `WITH rfm AS (SELECT customer_id, CAST(julianday('2026-06-30') - julianday(MAX(order_date)) AS INTEGER) AS recency, COUNT(DISTINCT order_id) AS frequency, ROUND(SUM(total_amount)) AS monetary FROM orders WHERE status = 'completed' GROUP BY customer_id) SELECT CASE WHEN frequency >= 3 OR monetary >= 5000 THEN '活躍' WHEN frequency >= 5 AND monetary >= 10000 THEN 'VIP' WHEN recency <= 180 THEN '沉睡' ELSE '其他' END AS segment, COUNT(*) AS customer_count, ROUND(AVG(monetary)) AS avg_monetary FROM rfm GROUP BY segment ORDER BY customer_count DESC`,
+            `WITH rfm AS (SELECT customer_id, CAST(julianday('2026-06-30') - julianday(MAX(order_date)) AS INTEGER) AS recency, COUNT(DISTINCT order_id) AS frequency, ROUND(SUM(total_amount)) AS monetary FROM orders WHERE status = 'completed' AND order_date <= '2026-06-30' GROUP BY customer_id) SELECT CASE WHEN frequency >= 3 OR monetary >= 5000 THEN '活躍' WHEN frequency >= 5 AND monetary >= 10000 THEN 'VIP' WHEN recency <= 180 THEN '沉睡' ELSE '其他' END AS segment, COUNT(*) AS customer_count, ROUND(AVG(monetary)) AS avg_monetary FROM rfm GROUP BY segment ORDER BY customer_count DESC`,
           ],
           ordered: true,
         },
@@ -356,7 +387,9 @@ ORDER BY customer_count DESC;`,
           title: '找出沉睡高價值客戶',
           difficulty: 3,
           scenario: 'CRM 專員想發送喚醒郵件給「很久沒買，但歷史消費高」的會員，這批人是最值得挽回的。',
-          prompt: `找出「沉睡高價值客戶」：
+          prompt: `所有指標只讀取 order_date <= '2026-06-30' 的訂單（含截止日）。
+
+找出「沉睡高價值客戶」：
 
 - \`recency\` > 90（最後購買距今超過 90 天）
 - \`monetary\` > 5000（歷史消費超過 5000）
@@ -371,7 +404,7 @@ RFM 定義同前（completed 訂單，基準日 2026-06-30）。
     COUNT(DISTINCT order_id) AS frequency,
     ROUND(SUM(total_amount)) AS monetary
   FROM orders
-  WHERE status = 'completed'
+  WHERE status = 'completed' AND order_date <= '2026-06-30'
   GROUP BY customer_id
 )
 SELECT
@@ -391,8 +424,8 @@ ORDER BY monetary DESC;`,
 
 沉睡高價值客戶對業績的潛在貢獻最大，是 CRM 行動的優先目標。`,
           negatives: [
-            `WITH rfm AS (SELECT customer_id, CAST(julianday('2026-06-30') - julianday(MAX(order_date)) AS INTEGER) AS recency, COUNT(DISTINCT order_id) AS frequency, ROUND(SUM(total_amount)) AS monetary FROM orders WHERE status = 'completed' GROUP BY customer_id) SELECT customer_id, recency, frequency, monetary FROM rfm WHERE recency > 90 OR monetary > 5000 ORDER BY monetary DESC`,
-            `WITH rfm AS (SELECT customer_id, CAST(julianday('2026-06-30') - julianday(MAX(order_date)) AS INTEGER) AS recency, COUNT(DISTINCT order_id) AS frequency, ROUND(SUM(total_amount)) AS monetary FROM orders GROUP BY customer_id) SELECT customer_id, recency, frequency, monetary FROM rfm WHERE recency > 90 AND monetary > 5000 ORDER BY monetary DESC`,
+            `WITH rfm AS (SELECT customer_id, CAST(julianday('2026-06-30') - julianday(MAX(order_date)) AS INTEGER) AS recency, COUNT(DISTINCT order_id) AS frequency, ROUND(SUM(total_amount)) AS monetary FROM orders WHERE status = 'completed' AND order_date <= '2026-06-30' GROUP BY customer_id) SELECT customer_id, recency, frequency, monetary FROM rfm WHERE recency > 90 OR monetary > 5000 ORDER BY monetary DESC`,
+            `WITH rfm AS (SELECT customer_id, CAST(julianday('2026-06-30') - julianday(MAX(order_date)) AS INTEGER) AS recency, COUNT(DISTINCT order_id) AS frequency, ROUND(SUM(total_amount)) AS monetary FROM orders WHERE order_date <= '2026-06-30' GROUP BY customer_id) SELECT customer_id, recency, frequency, monetary FROM rfm WHERE recency > 90 AND monetary > 5000 ORDER BY monetary DESC`,
           ],
           ordered: true,
         },
@@ -444,36 +477,79 @@ ORDER BY total_cost DESC;`,
           title: '活動歸因訂單數與營收',
           difficulty: 3,
           scenario: '行銷分析師要計算各廣告活動實際帶來了多少訂單和營收，為下一季的預算分配提供依據。',
-          prompt: `計算每個 campaign 透過 \`sessions\` 帶來的 \`completed\` 訂單數 \`attributed_orders\` 和營收 \`attributed_revenue\`。
+          prompt: `本課自訂教學模型（不是 GA4 Last Click）：同會員的 completed 訂單，候選 session 必須 campaign_id 非 NULL，日期在訂單日前 30 個完整日（含第 30 日、不含訂單同日）。選 session_start 最大者，同時刻以 session_id DESC 決勝。每單只歸屬一個活動，無候選不歸因。
 
-串接邏輯：\`sessions.campaign_id\` → \`sessions.customer_id\` → \`orders.customer_id\`，且訂單日期（\`order_date\`）必須 >= session 開始日期（\`DATE(session_start)\`）。
+使用全資料期間的 completed 訂單；先每單唯一再按 campaign_id 彙總，禁止用 SUM(DISTINCT total_amount) 代替訂單去重。
 
-只計有 \`campaign_id\` 的 session（\`IS NOT NULL\`）。
+回傳 campaign_id、attributed_orders（COUNT(*)）、attributed_revenue（ROUND 整數）；只顯示有歸因訂單的活動，依 attributed_revenue DESC、campaign_id ASC 排序。`,
+          answer: `WITH ranked_touches AS (
+  SELECT o.order_id, o.total_amount, s.campaign_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY o.order_id
+      ORDER BY s.session_start DESC, s.session_id DESC
+    ) AS touch_rank
+  FROM orders o
+  JOIN sessions s ON s.customer_id = o.customer_id
+    AND DATE(s.session_start) >= DATE(o.order_date, '-30 days')
+    AND DATE(s.session_start) < DATE(o.order_date)
+  WHERE o.status = 'completed' AND s.campaign_id IS NOT NULL
+),
+winners AS (
+  SELECT order_id, total_amount, campaign_id
+  FROM ranked_touches WHERE touch_rank = 1
+)
+SELECT campaign_id, COUNT(*) AS attributed_orders,
+  ROUND(SUM(total_amount)) AS attributed_revenue
+FROM winners
+GROUP BY campaign_id
+ORDER BY attributed_revenue DESC, campaign_id ASC;`,
+          hints: ['先找每張訂單的 30 個完整日前候選 session。', 'ROW_NUMBER 按 order_id 分組，依 session_start DESC、session_id DESC 排序。', '只在 touch_rank = 1 的 winners 上 COUNT(*) 和 SUM(total_amount)。'],
+          explanation: `本課自訂教學模型（不是 GA4 Last Click）：同會員的 completed 訂單，候選 session 必須 campaign_id 非 NULL，日期在訂單日前 30 個完整日（含第 30 日、不含訂單同日）。選 session_start 最大者，同時刻以 session_id DESC 決勝。每單只歸屬一個活動，無候選不歸因。
 
-回傳欄位：\`campaign_id\`、\`attributed_orders\`、\`attributed_revenue\`（ROUND 整數），只顯示 \`attributed_orders > 0\`，依 \`attributed_revenue\` DESC 排序。`,
-          answer: `SELECT
-  s.campaign_id,
-  COUNT(DISTINCT o.order_id)   AS attributed_orders,
-  ROUND(SUM(o.total_amount))   AS attributed_revenue
-FROM sessions s
-JOIN orders o
-  ON  o.customer_id = s.customer_id
-  AND o.order_date >= DATE(s.session_start)
-  AND o.status = 'completed'
-WHERE s.campaign_id IS NOT NULL
-GROUP BY s.campaign_id
-HAVING COUNT(DISTINCT o.order_id) > 0
-ORDER BY attributed_revenue DESC;`,
-          hints: [
-            'FROM sessions s JOIN orders o ON o.customer_id = s.customer_id',
-            '加條件：AND o.order_date >= DATE(s.session_start)',
-            'WHERE s.campaign_id IS NOT NULL',
-            'HAVING COUNT(DISTINCT o.order_id) > 0',
-          ],
-          explanation: `廣告歸因的邏輯是：同一位客戶，在 session 發生之後才下的訂單，才算是這個廣告活動帶來的。\`COUNT(DISTINCT o.order_id)\` 確保同一訂單只計一次，即使這位客戶有多個來自同一 campaign 的 session。`,
+ROW_NUMBER 按 order_id 分組後保留 touch_rank = 1，才可安全 SUM(total_amount)。COUNT(DISTINCT order_id) 只保護單數，SUM(DISTINCT total_amount) 則會錯刪同額不同單。`,
           negatives: [
-            `SELECT s.campaign_id, COUNT(DISTINCT o.order_id) AS attributed_orders, ROUND(SUM(o.total_amount)) AS attributed_revenue FROM sessions s JOIN orders o ON o.customer_id = s.customer_id WHERE s.campaign_id IS NOT NULL AND o.status = 'completed' GROUP BY s.campaign_id HAVING COUNT(DISTINCT o.order_id) > 0 ORDER BY attributed_revenue DESC`,
-            `SELECT s.campaign_id, COUNT(o.order_id) AS attributed_orders, ROUND(SUM(o.total_amount)) AS attributed_revenue FROM sessions s JOIN orders o ON o.customer_id = s.customer_id AND o.order_date >= DATE(s.session_start) AND o.status = 'completed' WHERE s.campaign_id IS NOT NULL GROUP BY s.campaign_id HAVING COUNT(o.order_id) > 0 ORDER BY attributed_revenue DESC`,
+            `WITH ranked_touches AS (
+  SELECT o.order_id, o.total_amount, s.campaign_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY o.order_id
+      ORDER BY s.session_start DESC, s.session_id DESC
+    ) AS touch_rank
+  FROM orders o
+  JOIN sessions s ON s.customer_id = o.customer_id
+    AND DATE(s.session_start) >= DATE(o.order_date, '-30 days')
+    AND DATE(s.session_start) < DATE(o.order_date)
+  WHERE o.status = 'completed' AND s.campaign_id IS NOT NULL
+),
+winners AS (
+  SELECT order_id, total_amount, campaign_id
+  FROM ranked_touches
+)
+SELECT campaign_id, COUNT(*) AS attributed_orders,
+  ROUND(SUM(total_amount)) AS attributed_revenue
+FROM winners
+GROUP BY campaign_id
+ORDER BY attributed_revenue DESC, campaign_id ASC;`,
+            `WITH ranked_touches AS (
+  SELECT o.order_id, o.total_amount, s.campaign_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY o.order_id
+      ORDER BY s.session_start DESC, s.session_id DESC
+    ) AS touch_rank
+  FROM orders o
+  JOIN sessions s ON s.customer_id = o.customer_id
+    AND DATE(s.session_start) >= DATE(o.order_date, '-30 days')
+    AND DATE(s.session_start) < DATE(o.order_date)
+  WHERE o.status = 'completed' AND s.campaign_id IS NOT NULL
+),
+winners AS (
+  SELECT order_id, total_amount, campaign_id
+  FROM ranked_touches WHERE touch_rank = 1
+)
+SELECT campaign_id, COUNT(*) AS attributed_orders,
+  ROUND(SUM(total_amount) * 2) AS attributed_revenue
+FROM winners
+GROUP BY campaign_id
+ORDER BY attributed_revenue DESC, campaign_id ASC;`,
           ],
           ordered: true,
         },
@@ -482,58 +558,116 @@ ORDER BY attributed_revenue DESC;`,
           title: '合併計算 ROAS',
           difficulty: 3,
           scenario: '行銷主管要看各活動的 ROAS 排行榜，決定哪些活動要加碼投放、哪些要暫停。',
-          prompt: `結合廣告花費和歸因營收，計算 ROAS：
+          prompt: `計算 全資料期間 的廣告 ROAS。訂單日期與 spend_date 都使用此報表期間；session 回溯可跨報表起點，不另限制在同月或同季。
 
-\`roas = attributed_revenue / total_cost\`（用 NULLIF 防零，ROUND 2位小數）
+本課自訂教學模型（不是 GA4 Last Click）：同會員的 completed 訂單，候選 session 必須 campaign_id 非 NULL，日期在訂單日前 30 個完整日（含第 30 日、不含訂單同日）。選 session_start 最大者，同時刻以 session_id DESC 決勝。每單只歸屬一個活動，無候選不歸因。
 
-回傳欄位：\`campaign_name\`、\`platform\`、\`total_cost\`、\`attributed_revenue\`、\`roas\`。
+先每單唯一，再 SUM(total_amount)；花費獨立按活動加總，兩者皆 ROUND 整數，再以營收 * 1.0 / NULLIF(total_cost, 0) 計算 roas，ROUND 2 位。
 
-只顯示 \`total_cost > 0\`，依 \`roas\` DESC NULLS LAST 排序。`,
-          answer: `WITH spend AS (
-  SELECT
-    a.campaign_id,
-    c.campaign_name,
-    c.platform,
+回傳 campaign_name、platform、total_cost、attributed_revenue、roas。保留所有有花費記錄的活動；只顯示 total_cost > 0，無歸因營收及 ROAS 顯示 0。依 roas DESC NULLS LAST、campaign_id ASC 決勝（campaign_id 不需輸出）。`,
+          answer: `WITH ranked_touches AS (
+  SELECT o.order_id, o.total_amount, s.campaign_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY o.order_id
+      ORDER BY s.session_start DESC, s.session_id DESC
+    ) AS touch_rank
+  FROM orders o
+  JOIN sessions s ON s.customer_id = o.customer_id
+    AND DATE(s.session_start) >= DATE(o.order_date, '-30 days')
+    AND DATE(s.session_start) < DATE(o.order_date)
+  WHERE o.status = 'completed' AND s.campaign_id IS NOT NULL
+),
+winners AS (
+  SELECT order_id, total_amount, campaign_id
+  FROM ranked_touches WHERE touch_rank = 1
+),
+spend AS (
+  SELECT c.campaign_id, c.campaign_name, c.platform,
     ROUND(SUM(a.cost)) AS total_cost
-  FROM ad_spend a
-  JOIN campaigns c ON a.campaign_id = c.campaign_id
-  GROUP BY a.campaign_id, c.campaign_name, c.platform
+  FROM campaigns c JOIN ad_spend a ON a.campaign_id = c.campaign_id
+  GROUP BY c.campaign_id, c.campaign_name, c.platform
 ),
 revenue AS (
-  SELECT
-    s.campaign_id,
-    COUNT(DISTINCT o.order_id)  AS attributed_orders,
-    ROUND(SUM(o.total_amount))  AS attributed_revenue
-  FROM sessions s
-  JOIN orders o
-    ON  o.customer_id = s.customer_id
-    AND o.order_date >= DATE(s.session_start)
-    AND o.status = 'completed'
-  WHERE s.campaign_id IS NOT NULL
-  GROUP BY s.campaign_id
+  SELECT campaign_id, ROUND(SUM(total_amount)) AS attributed_revenue
+  FROM winners GROUP BY campaign_id
 )
-SELECT
-  sp.campaign_name,
-  sp.platform,
-  sp.total_cost,
+SELECT sp.campaign_name, sp.platform, sp.total_cost,
   COALESCE(rv.attributed_revenue, 0) AS attributed_revenue,
-  ROUND(COALESCE(rv.attributed_revenue, 0) / NULLIF(sp.total_cost, 0), 2) AS roas
-FROM spend sp
-LEFT JOIN revenue rv ON sp.campaign_id = rv.campaign_id
+  ROUND(COALESCE(rv.attributed_revenue, 0) * 1.0 / NULLIF(sp.total_cost, 0), 2) AS roas
+FROM spend sp LEFT JOIN revenue rv ON rv.campaign_id = sp.campaign_id
 WHERE sp.total_cost > 0
-ORDER BY roas DESC NULLS LAST;`,
-          hints: [
-            '第一個 CTE：廣告花費（同 e01）',
-            '第二個 CTE：歸因營收（同 e02）',
-            'LEFT JOIN revenue 因為有些 campaign 可能沒有帶來訂單',
-            'COALESCE(rv.attributed_revenue, 0) 處理沒有歸因的活動',
-            'ROUND(revenue / NULLIF(cost, 0), 2) 計算 ROAS',
-          ],
-          explanation: `用 \`LEFT JOIN\` 確保即使某個 campaign 沒有帶來任何訂單，也會出現在結果中（attributed_revenue 為 NULL，經 COALESCE 轉為 0）。
+ORDER BY roas DESC NULLS LAST, sp.campaign_id ASC;`,
+          hints: ['先在 order_id 粒度選最後有效 session，再算活動營收；花費獨立彙總後 LEFT JOIN。'],
+          explanation: `本課自訂教學模型（不是 GA4 Last Click）：同會員的 completed 訂單，候選 session 必須 campaign_id 非 NULL，日期在訂單日前 30 個完整日（含第 30 日、不含訂單同日）。選 session_start 最大者，同時刻以 session_id DESC 決勝。每單只歸屬一個活動，無候選不歸因。
 
-\`NULLS LAST\` 讓 ROAS 無法計算（NULL）的列排在最後，而非最前面，符合業務閱讀習慣。`,
+先決定每張訂單 winner 再加總，防止同會員多 session 膨脹營收。兩張同額訂單仍需各自計入，不能 SUM(DISTINCT total_amount)。花費先獨立聚合，避免被訂單或 session 重複乘上。跨月接觸仍可符合回溯窗；資料起點附近可能缺窗前資料。歸因不是因果證據。
+
+SQLite DESC 預設已將 NULL 排最後；NULLS LAST 是明示意圖，不是修正預設。相同 ROAS 以 campaign_id ASC 決勝。`,
           negatives: [
-            `WITH spend AS (SELECT a.campaign_id, c.campaign_name, c.platform, ROUND(SUM(a.cost)) AS total_cost FROM ad_spend a JOIN campaigns c ON a.campaign_id = c.campaign_id GROUP BY a.campaign_id, c.campaign_name, c.platform), revenue AS (SELECT s.campaign_id, ROUND(SUM(o.total_amount)) AS attributed_revenue FROM sessions s JOIN orders o ON o.customer_id = s.customer_id AND o.order_date >= DATE(s.session_start) AND o.status = 'completed' WHERE s.campaign_id IS NOT NULL GROUP BY s.campaign_id) SELECT sp.campaign_name, sp.platform, sp.total_cost, rv.attributed_revenue, ROUND(sp.total_cost / NULLIF(rv.attributed_revenue, 0), 2) AS roas FROM spend sp JOIN revenue rv ON sp.campaign_id = rv.campaign_id WHERE sp.total_cost > 0 ORDER BY roas DESC NULLS LAST`,
+            `WITH ranked_touches AS (
+  SELECT o.order_id, o.total_amount, s.campaign_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY o.order_id
+      ORDER BY s.session_start DESC, s.session_id DESC
+    ) AS touch_rank
+  FROM orders o
+  JOIN sessions s ON s.customer_id = o.customer_id
+    AND DATE(s.session_start) >= DATE(o.order_date, '-30 days')
+    AND DATE(s.session_start) < DATE(o.order_date)
+  WHERE o.status = 'completed' AND s.campaign_id IS NOT NULL
+),
+winners AS (
+  SELECT order_id, total_amount, campaign_id
+  FROM ranked_touches
+),
+spend AS (
+  SELECT c.campaign_id, c.campaign_name, c.platform,
+    ROUND(SUM(a.cost)) AS total_cost
+  FROM campaigns c JOIN ad_spend a ON a.campaign_id = c.campaign_id
+  GROUP BY c.campaign_id, c.campaign_name, c.platform
+),
+revenue AS (
+  SELECT campaign_id, ROUND(SUM(total_amount)) AS attributed_revenue
+  FROM winners GROUP BY campaign_id
+)
+SELECT sp.campaign_name, sp.platform, sp.total_cost,
+  COALESCE(rv.attributed_revenue, 0) AS attributed_revenue,
+  ROUND(COALESCE(rv.attributed_revenue, 0) * 1.0 / NULLIF(sp.total_cost, 0), 2) AS roas
+FROM spend sp LEFT JOIN revenue rv ON rv.campaign_id = sp.campaign_id
+WHERE sp.total_cost > 0
+ORDER BY roas DESC NULLS LAST, sp.campaign_id ASC;`,
+            `WITH ranked_touches AS (
+  SELECT o.order_id, o.total_amount, s.campaign_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY o.order_id
+      ORDER BY s.session_start DESC, s.session_id DESC
+    ) AS touch_rank
+  FROM orders o
+  JOIN sessions s ON s.customer_id = o.customer_id
+    AND DATE(s.session_start) >= DATE(o.order_date, '-30 days')
+    AND DATE(s.session_start) < DATE(o.order_date)
+  WHERE o.status = 'completed' AND s.campaign_id IS NOT NULL
+),
+winners AS (
+  SELECT order_id, total_amount, campaign_id
+  FROM ranked_touches WHERE touch_rank = 1
+),
+spend AS (
+  SELECT c.campaign_id, c.campaign_name, c.platform,
+    ROUND(SUM(a.cost)) AS total_cost
+  FROM campaigns c JOIN ad_spend a ON a.campaign_id = c.campaign_id
+  GROUP BY c.campaign_id, c.campaign_name, c.platform
+),
+revenue AS (
+  SELECT campaign_id, ROUND(SUM(total_amount) * 2) AS attributed_revenue
+  FROM winners GROUP BY campaign_id
+)
+SELECT sp.campaign_name, sp.platform, sp.total_cost,
+  COALESCE(rv.attributed_revenue, 0) AS attributed_revenue,
+  ROUND(COALESCE(rv.attributed_revenue, 0) * 1.0 / NULLIF(sp.total_cost, 0), 2) AS roas
+FROM spend sp LEFT JOIN revenue rv ON rv.campaign_id = sp.campaign_id
+WHERE sp.total_cost > 0
+ORDER BY roas DESC NULLS LAST, sp.campaign_id ASC;`,
           ],
           ordered: true,
         },

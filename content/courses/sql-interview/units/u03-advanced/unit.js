@@ -73,12 +73,13 @@ order_date  | rn | order_date - (rn-1) days = grp
 
 **常見扣分點：**
 - 沒有先 \`DISTINCT order_date\`，同天有多筆訂單導致 ROW_NUMBER 跳號
-- 用 \`LEAD/LAG\` 找「相差 1 天」，只能找連續 2 天，無法找 N 天的區間
+- 只比較相鄰日期卻沒有累積斷點分組，無法輸出完整區間；LAG + 斷點累積 SUM 則是合法的任意 N 天解法
 - SQLite 的 \`date(order_date, '-N days')\` 語法中 N 必須用字串拼接，不能直接用變數
 
 **追問方向：**
 - 「如果改成連續 5 天，你的 SQL 要改哪裡？」（只改 WHERE consecutive_days >= 5）
 - 「如果同一天有多種 status 的訂單，你的邏輯還成立嗎？」`,
+          alternatives: [{ sql: `WITH order_dates AS (SELECT DISTINCT order_date FROM orders WHERE status = 'completed'), lagged AS (SELECT order_date, LAG(order_date) OVER (ORDER BY order_date) AS prev_date FROM order_dates), gaps AS (SELECT order_date, CASE WHEN julianday(order_date) - julianday(prev_date) = 1 THEN 0 ELSE 1 END AS is_new_group FROM lagged), grp_assign AS (SELECT order_date, SUM(is_new_group) OVER (ORDER BY order_date) AS grp FROM gaps), counted AS (SELECT grp, MIN(order_date) AS start_date, MAX(order_date) AS end_date, COUNT(*) AS consecutive_days FROM grp_assign GROUP BY grp) SELECT start_date, end_date, consecutive_days FROM counted WHERE consecutive_days >= 3 ORDER BY start_date;`, note: "LAG 標記斷點，再累積 SUM 建立完整連續區間；可找任意 N 天。" }],
           negatives: [
             `WITH order_dates AS (SELECT order_date FROM orders WHERE status = 'completed'), numbered AS (SELECT order_date, date(order_date, '-' || (ROW_NUMBER() OVER (ORDER BY order_date) - 1) || ' days') AS grp FROM order_dates), groups AS (SELECT grp, MIN(order_date) AS start_date, MAX(order_date) AS end_date, COUNT(*) AS consecutive_days FROM numbered GROUP BY grp) SELECT start_date, end_date, consecutive_days FROM groups WHERE consecutive_days >= 3 ORDER BY start_date ASC;`,
             `WITH order_dates AS (SELECT DISTINCT order_date FROM orders WHERE status = 'completed'), lagged AS (SELECT order_date, LAG(order_date) OVER (ORDER BY order_date) AS prev_date FROM order_dates), gaps AS (SELECT order_date, CASE WHEN julianday(order_date) - julianday(prev_date) = 1 THEN 0 ELSE 1 END AS is_new_group FROM lagged), grp_assign AS (SELECT order_date, SUM(is_new_group) OVER (ORDER BY order_date) AS grp FROM gaps), counted AS (SELECT grp, MIN(order_date) AS start_date, MAX(order_date) AS end_date, COUNT(*) AS consecutive_days FROM grp_assign GROUP BY grp) SELECT start_date, end_date, consecutive_days FROM counted WHERE consecutive_days >= 2 ORDER BY start_date;`,
@@ -90,9 +91,10 @@ order_date  | rn | order_date - (rn-1) days = grp
           title: '單一 SQL：最近 30 / 60 / 90 天營收對比',
           difficulty: 3,
           scenario: '面試官說：「請用一個 SQL，算出截至 2026-06-30 最近 30 天、60 天、90 天的 completed 訂單營收，放在同一列回傳，方便直接看趨勢。」',
-          prompt: `用**單一 SQL**（不用多個查詢），計算截至 **2026-06-30** 的多期間營收對比。
+          prompt: `用**單一 SQL statement**（可含 scalar subquery；不可分多次執行），計算截至 **2026-06-30** 的多期間營收對比。
 
 **定義：**
+- 某期間沒有 completed 訂單時營收顯示 0。
 - 只計算 \`status = 'completed'\` 的訂單
 - **最近 30 天**：order_date >= date('2026-06-30', '-29 days')
 - **最近 60 天**：order_date >= date('2026-06-30', '-59 days')
@@ -102,26 +104,27 @@ order_date  | rn | order_date - (rn-1) days = grp
 **回傳欄位：** \`rev_30d\`（ROUND 整數）, \`rev_60d\`（ROUND 整數）, \`rev_90d\`（ROUND 整數）`,
           starter: '',
           answer: `SELECT
-  ROUND(SUM(CASE WHEN order_date >= date('2026-06-30', '-29 days') THEN total_amount ELSE 0 END)) AS rev_30d,
-  ROUND(SUM(CASE WHEN order_date >= date('2026-06-30', '-59 days') THEN total_amount ELSE 0 END)) AS rev_60d,
-  ROUND(SUM(CASE WHEN order_date >= date('2026-06-30', '-89 days') THEN total_amount ELSE 0 END)) AS rev_90d
+  ROUND(COALESCE(SUM(CASE WHEN order_date >= date('2026-06-30', '-29 days') THEN total_amount ELSE 0 END), 0)) AS rev_30d,
+  ROUND(COALESCE(SUM(CASE WHEN order_date >= date('2026-06-30', '-59 days') THEN total_amount ELSE 0 END), 0)) AS rev_60d,
+  ROUND(COALESCE(SUM(CASE WHEN order_date >= date('2026-06-30', '-89 days') THEN total_amount ELSE 0 END), 0)) AS rev_90d
 FROM orders
 WHERE status     = 'completed'
   AND order_date >= date('2026-06-30', '-89 days')
   AND order_date <= '2026-06-30';`,
           hints: [],
           explanation: `**CASE WHEN pivot 技巧：**
-只掃描一次資料表（WHERE 先限縮到 90 天範圍），再用三個 \`CASE WHEN\` 分別把各期間的金額加進不同的欄位。
+這個寫法在語法上以一次聚合表達（實際掃描計畫由最佳化器決定；WHERE 先限縮到 90 天範圍），再用三個 \`CASE WHEN\` 分別把各期間的金額加進不同的欄位。
 
 **常見扣分點：**
-- 用三個子查詢各自算，雖然正確但不是「單一 SQL」的解法
-- 「最近 30 天」用 \`'-30 days'\` 得到 31 天的資料（date('2026-06-30', '-30 days') = 2026-05-31，不含 05-31 到 06-30 共 31 天）
+- SELECT 內三個 scalar subquery 仍是一個 SQL statement，是合法替代解；與三次獨立執行不同，不應因寫法扣分
+- 「最近 30 天」用 \`'-30 days'\` 得到 31 天的資料（date('2026-06-30', '-30 days') = 2026-05-31，含 05-31 到 06-30 共 31 天）
 - 忘記 AND order_date <= '2026-06-30'（如果基準日不是資料最後一天，會算到未來）
 - CASE WHEN 的 ELSE 漏掉或寫成 NULL（NULL 加進 SUM 不影響結果，但寫 0 更清楚）
 
 **追問方向：**
 - 「如果要加第四個期間（最近 120 天），你怎麼改？」（加一行 CASE WHEN + 調整 WHERE）
 - 「rev_90d 一定 >= rev_60d >= rev_30d 嗎？為什麼？」（因為都是從同一截止日往前算，90天包含60天包含30天的範圍）`,
+          alternatives: [{ sql: `SELECT (SELECT ROUND(COALESCE(SUM(total_amount), 0)) FROM orders WHERE status = 'completed' AND order_date >= date('2026-06-30', '-29 days') AND order_date <= '2026-06-30') AS rev_30d, (SELECT ROUND(COALESCE(SUM(total_amount), 0)) FROM orders WHERE status = 'completed' AND order_date >= date('2026-06-30', '-59 days') AND order_date <= '2026-06-30') AS rev_60d, (SELECT ROUND(COALESCE(SUM(total_amount), 0)) FROM orders WHERE status = 'completed' AND order_date >= date('2026-06-30', '-89 days') AND order_date <= '2026-06-30') AS rev_90d;`, note: "三個 scalar subquery 仍是單一 SQL statement；各自明確指定含截止日的視窗。" }],
           negatives: [
             `SELECT ROUND(SUM(CASE WHEN order_date >= date('2026-06-30', '-30 days') THEN total_amount ELSE 0 END)) AS rev_30d, ROUND(SUM(CASE WHEN order_date >= date('2026-06-30', '-60 days') THEN total_amount ELSE 0 END)) AS rev_60d, ROUND(SUM(CASE WHEN order_date >= date('2026-06-30', '-90 days') THEN total_amount ELSE 0 END)) AS rev_90d FROM orders WHERE status = 'completed' AND order_date >= date('2026-06-30', '-90 days') AND order_date <= '2026-06-30';`,
             `SELECT (SELECT ROUND(SUM(total_amount)) FROM orders WHERE status = 'completed' AND order_date >= date('2026-06-30', '-30 days') AND order_date <= '2026-06-30') AS rev_30d, (SELECT ROUND(SUM(total_amount)) FROM orders WHERE status = 'completed' AND order_date >= date('2026-06-30', '-60 days') AND order_date <= '2026-06-30') AS rev_60d, (SELECT ROUND(SUM(total_amount)) FROM orders WHERE status = 'completed' AND order_date >= date('2026-06-30', '-90 days') AND order_date <= '2026-06-30') AS rev_90d;`,
@@ -131,13 +134,13 @@ WHERE status     = 'completed'
           id: 'int.u03.l01.e03',
           title: '每天各分類銷售第一名商品',
           difficulty: 3,
-          scenario: '面試官說：「請找出 2026 年 6 月每一天，每個商品分類裡銷售數量最多的那一件商品。如果有同名次，只取其中一筆。」',
+          scenario: '面試官說：「請找出 2026 年 6 月每一天，每個商品分類裡銷售數量最多的那一件商品。如果有同名次，以 product_id 最小者決勝。」',
           prompt: `找出 **2026 年 6 月**每一天，每個分類中**銷售數量最多的商品**（取第一名）。
 
 **要求：**
 - 只計算 \`status = 'completed'\` 的訂單
 - \`daily_qty\`：該商品該天在該分類的 \`quantity\` 加總
-- 同名次只取一筆（用 \`ROW_NUMBER\`，不用 \`RANK\`）
+- 同銷量以 product_id ASC 決勝，只取一筆（用 \`ROW_NUMBER\`，不用 \`RANK\`）
 - 只回傳每天每分類的第一名
 
 **回傳欄位：** \`order_date\`, \`category\`, \`product_name\`, \`daily_qty\`
@@ -163,7 +166,7 @@ ranked AS (
   SELECT *,
     ROW_NUMBER() OVER (
       PARTITION BY order_date, category
-      ORDER BY daily_qty DESC
+      ORDER BY daily_qty DESC, product_id ASC
     ) AS rn
   FROM daily_sales
 )
@@ -174,7 +177,7 @@ ORDER BY order_date ASC, category ASC;`,
           hints: [],
           explanation: `**三步拆解：**
 1. \`daily_sales\`：先彙總到「日期 × 分類 × 商品」層級，算出 daily_qty
-2. \`ranked\`：用 ROW_NUMBER PARTITION BY (order_date, category) ORDER BY daily_qty DESC，每個日期×分類都有一個排名
+2. \`ranked\`：用 ROW_NUMBER PARTITION BY (order_date, category) ORDER BY daily_qty DESC, product_id ASC，每個日期×分類都有一個排名
 3. 外層 WHERE rn = 1 取第一名
 
 **ROW_NUMBER vs RANK vs DENSE_RANK：**

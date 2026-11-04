@@ -22,7 +22,9 @@ export const unit = {
           title: '各分類銷售前五名商品',
           difficulty: 2,
           scenario: '這是我們數據分析師二面的第一題。請在 15 分鐘內完成。',
-          prompt: `找出所有 \`completed\` 訂單中，**銷售數量最多的前 5 件商品**，並附上其所屬分類。
+          prompt: `銷量相同時以 product_id ASC 決勝。
+
+找出所有 \`completed\` 訂單中，**銷售數量最多的前 5 件商品**，並附上其所屬分類。
 
 **要求：**
 - 只計算 \`status = 'completed'\` 的訂單
@@ -42,7 +44,7 @@ JOIN products p ON p.product_id = oi.product_id
 JOIN orders   o ON o.order_id   = oi.order_id
 WHERE o.status = 'completed'
 GROUP BY p.product_id, p.category, p.product_name
-ORDER BY total_qty DESC
+ORDER BY total_qty DESC, p.product_id ASC
 LIMIT 5;`,
           hints: [],
           explanation: `**核心思路：** order_items（數量） → JOIN products（名稱/分類） → JOIN orders（篩狀態）。
@@ -55,8 +57,8 @@ LIMIT 5;`,
 **追問方向：**
 - 「如果要改成各分類分別取前 5，你的 SQL 要怎麼改？」（→ 視窗函數 RANK/ROW_NUMBER）`,
           negatives: [
-            `SELECT p.category, p.product_name, COUNT(oi.order_item_id) AS total_qty FROM order_items oi JOIN products p ON p.product_id = oi.product_id JOIN orders o ON o.order_id = oi.order_id WHERE o.status = 'completed' GROUP BY p.product_id, p.category, p.product_name ORDER BY total_qty DESC LIMIT 5;`,
-            `SELECT p.category, p.product_name, SUM(oi.quantity) AS total_qty FROM order_items oi JOIN products p ON p.product_id = oi.product_id GROUP BY p.product_id, p.category, p.product_name ORDER BY total_qty DESC LIMIT 5;`,
+            `SELECT p.category, p.product_name, COUNT(oi.order_item_id) AS total_qty FROM order_items oi JOIN products p ON p.product_id = oi.product_id JOIN orders o ON o.order_id = oi.order_id WHERE o.status = 'completed' GROUP BY p.product_id, p.category, p.product_name ORDER BY total_qty DESC, p.product_id ASC LIMIT 5;`,
+            `SELECT p.category, p.product_name, SUM(oi.quantity) AS total_qty FROM order_items oi JOIN products p ON p.product_id = oi.product_id GROUP BY p.product_id, p.category, p.product_name ORDER BY total_qty DESC, p.product_id ASC LIMIT 5;`,
           ],
           ordered: true,
         },
@@ -162,7 +164,26 @@ ORDER BY avg_order_value DESC;`,
 - 「如果改用視窗函數，不用 CTE，能做嗎？」（AVG(...) OVER () 不加 PARTITION BY 即為整體平均）`,
           negatives: [
             `WITH cust_avg AS (SELECT customer_id, ROUND(AVG(total_amount)) AS avg_order_value FROM orders WHERE status = 'completed' GROUP BY customer_id) SELECT ca.customer_id, c.name, ca.avg_order_value FROM cust_avg ca JOIN customers c ON c.customer_id = ca.customer_id WHERE ca.avg_order_value > (SELECT AVG(avg_order_value) FROM cust_avg) ORDER BY avg_order_value DESC;`,
-            `SELECT o.customer_id, c.name, ROUND(AVG(o.total_amount)) AS avg_order_value FROM orders o JOIN customers c ON c.customer_id = o.customer_id WHERE o.status = 'completed' GROUP BY o.customer_id, c.name HAVING AVG(o.total_amount) > AVG(AVG(o.total_amount)) ORDER BY avg_order_value DESC;`,
+            `WITH cust_avg AS (
+  SELECT
+    customer_id,
+    ROUND(AVG(total_amount)) AS avg_order_value
+  FROM orders
+  WHERE status = 'completed'
+  GROUP BY customer_id
+)
+SELECT
+  ca.customer_id,
+  c.name,
+  ca.avg_order_value
+FROM cust_avg ca
+JOIN customers c ON c.customer_id = ca.customer_id
+WHERE ca.avg_order_value < (
+  SELECT AVG(total_amount)
+  FROM orders
+  WHERE status = 'completed'
+)
+ORDER BY avg_order_value DESC;`,
           ],
           ordered: true,
         },
@@ -209,7 +230,20 @@ ORDER BY customer_id ASC, order_date ASC;`,
 **追問方向：**
 - 「PARTITION BY 和 GROUP BY 的差異是什麼？」`,
           negatives: [
-            `SELECT order_id, customer_id, order_date, total_amount, ROUND(AVG(total_amount) OVER ()) AS cust_avg FROM orders WHERE status = 'completed' AND total_amount > AVG(total_amount) OVER (PARTITION BY customer_id) ORDER BY customer_id ASC, order_date ASC;`,
+            `WITH base AS (
+  SELECT
+    order_id,
+    customer_id,
+    order_date,
+    total_amount,
+    ROUND(AVG(total_amount) OVER (PARTITION BY customer_id)) AS cust_avg
+  FROM orders
+  WHERE status = 'completed'
+)
+SELECT order_id, customer_id, order_date, total_amount, cust_avg
+FROM base
+WHERE total_amount < cust_avg
+ORDER BY customer_id ASC, order_date ASC;`,
             `WITH base AS (SELECT order_id, customer_id, order_date, total_amount, ROUND(AVG(total_amount) OVER ()) AS cust_avg FROM orders WHERE status = 'completed') SELECT order_id, customer_id, order_date, total_amount, cust_avg FROM base WHERE total_amount > cust_avg ORDER BY customer_id ASC, order_date ASC;`,
           ],
           ordered: true,

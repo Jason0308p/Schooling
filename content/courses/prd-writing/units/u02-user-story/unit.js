@@ -41,7 +41,7 @@ export const unit = {
           id: 'prd.u02.l01.q02',
           type: 'mcq',
           title: '識別錯誤的 User Story',
-          question: '下列哪一個是**錯誤**的 User Story 寫法？',
+          question: '以下依「是否以真實使用者角色及其價值為核心」判斷，哪個 Story 把系統誤當使用者角色？（UI 細節是否必要另行審查。）',
           options: [
             'A. As a 訂閱用戶, I want to receive a weekly digest email, so that I can stay updated without visiting the app every day.',
             'B. As a system, I want to send push notifications to all users at 9am, so that users are reminded.',
@@ -56,7 +56,7 @@ User Story 的主詞應該是**真實的使用者類型**（或人物誌 Persona
 「系統要在 9am 發通知」是一個技術實作描述，不是 User Story。正確改法：
 > As a **busy user**, I want to receive a morning reminder at 9am, so that I don't miss important updates.
 
-其他選項都有明確的使用者角色（訂閱用戶、首購者、店長）和具體的使用者價值。`,
+其他選項都有明確的使用者角色（訂閱用戶、首購者、店長）和具體的使用者價值。C 的進度條仍是 UI 選型，可先改寫成「知道剩餘結帳步驟」；D 的 CSV 若為 Excel 相容性所需，則是有依據的功能約束。`,
         },
         {
           id: 'prd.u02.l01.q03',
@@ -126,12 +126,12 @@ Given 確立了「在什麼情況下」這個 AC 才適用，不同的初始狀�
             'D. Given 使用者在半夜登入的情境',
           ],
           answer: 1,
-          explanation: `**連續輸入錯誤密碼**是登入功能中最關鍵的 Edge Case，涉及安全性（防暴力破解）和使用者體驗（帳號鎖定提示）。
+          explanation: `**連續輸入錯誤密碼**是本題選項中應優先補上的安全相關失敗路徑，應定義限流、必要時的暫時鎖定與恢復方式，而非認定連錯 5 次就必須永久鎖定。
 
 如果沒有定義這個情境，工程師可能：
 - 不做帳號鎖定
 - 鎖定後沒有提供解鎖方式
-- 不顯示剩餘嘗試次數
+- 對失敗後的重試與恢復行為沒有一致約定
 
 Edge Case 的選取原則：優先考慮**影響安全性、資料完整性、或使用者重要流程**的情境，而非僅考慮設備或環境差異。`,
         },
