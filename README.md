@@ -3,8 +3,8 @@
 Schooling 是一個以真實工作情境為核心的免費互動學習平台。SQL 課程透過 sql.js 在瀏覽器內執行 SQLite，非 SQL 課程使用互動式選擇題；不需要後端、Docker 或外部資料庫。
 
 - 線上網站：`https://schooling.jason0308p.workers.dev`
-- 目前規模：10 門課、90 課、250 題、179 個課文範例
-- 課程領域：SQL、GA4、Looker Studio、產品數據、PRD、AI 工作術與 Prompt Engineering
+- 目前規模：13 門課、113 課、296 題、204 個課文範例
+- 課程領域：SQL、GA4、Looker Studio、產品數據、PRD、AI 工作術、資料結構與演算法面試
 - 學習功能：SQL 即時批改、MCQ 即時回饋、錯題複習、學習進度與完課證書
 
 ---
@@ -37,7 +37,7 @@ Schooling/
 │  └─ vendor/            第三方套件（sql.js、CodeMirror，已下載到本地）
 ├─ content/              課程內容（跟程式完全分開）
 │  ├─ catalog.js         課程目錄
-│  ├─ courses/           10 門課程的設定、單元、課文與題目
+│  ├─ courses/           13 門課程的設定、單元、課文與題目
 │  └─ datasets/          電商與 App 產品模擬資料集
 └─ tools/
    ├─ validate-content.mjs   內容驗證（新增/修改課程後必跑）
@@ -53,6 +53,7 @@ Schooling/
 | [docs/CURRICULUM.md](docs/CURRICULUM.md) | 學員 / 課程規劃 | 完整課程版圖與建議學習路徑 |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 開發者 | 系統架構、資料流、各模組職責、設計決策 |
 | [docs/CONTENT_GUIDE.md](docs/CONTENT_GUIDE.md) | 寫課程的人 | 怎麼新增課、題目、單元、課程，欄位規格 |
+| [docs/ALGORITHM_TEACHING_GUIDE.md](docs/ALGORITHM_TEACHING_GUIDE.md) | 演算法課作者 | 以學習者推理為中心的課文動線與評量限制 |
 | [docs/DATASET.md](docs/DATASET.md) | 寫課程的人 | 練習資料表說明、資料特性、刻意埋的髒資料 |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | 要上線的人 | 部署到 Cloudflare Workers、Git 自動部署、疑難排解 |
 | [docs/CI.md](docs/CI.md) | 開發者 / AI Agent | GitHub Actions 自動驗證、觸發方式與結果判讀 |

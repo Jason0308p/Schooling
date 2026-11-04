@@ -8,7 +8,7 @@ This file is the canonical entry point for AI agents working on Schooling. It is
 - Repository: `Jason0308p/Schooling`, branch `main`
 - Production: `https://schooling.jason0308p.workers.dev`
 - Architecture: static SPA deployed to Cloudflare Workers; SQL exercises run in the browser with SQLite/sql.js.
-- Current verified scope: 10 courses, 90 lessons, 250 exercises.
+- Current verified scope: 13 courses, 113 lessons, 296 exercises.
 
 ## Required Reading
 

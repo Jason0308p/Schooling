@@ -83,4 +83,28 @@ export const catalog = [
     blurb: '四個維度寫出可預期的 Prompt—Role/Task/Format/Context—附行銷、PM、分析師的實用模板庫。',
     load: () => import('./courses/prompt-engineering/course.js'),
   },
+  {
+    id: 'data-structures',
+    title: '資料結構基礎：從陣列到圖',
+    level: '入門',
+    tags: ['資料結構', '程式面試', 'JavaScript'],
+    blurb: '理解陣列、Hash、Stack、Queue、Linked List、Tree、Heap 和 Graph 的取捨。',
+    load: () => import('./courses/data-structures/course.js'),
+  },
+  {
+    id: 'algorithm-interview',
+    title: '演算法與面試解題入門',
+    level: '入門 → 進階',
+    tags: ['演算法', '雙指標', '滑動視窗', '二分搜尋', '面試'],
+    blurb: '練習複雜度、辨識題型、推導解法與測試邊界，不靠死背題解。',
+    load: () => import('./courses/algorithm-interview/course.js'),
+  },
+  {
+    id: 'coding-practice',
+    title: '程式面試題實戰：Easy 起步',
+    level: '入門',
+    tags: ['面試', '演算法', '原創練習', 'JavaScript'],
+    blurb: '以原創情境練讀題、手算、解釋複雜度；站內為觀念測驗，程式練習另行操作。',
+    load: () => import('./courses/coding-practice/course.js'),
+  },
 ];

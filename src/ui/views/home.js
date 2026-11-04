@@ -7,7 +7,8 @@ import { LEARNING_PATHS } from '../../core/learningPaths.js';
 
 const FILTERS = [
   { key: 'all', label: '全部' },
-  { key: 'sql', label: 'SQL 分析', match: c => c.tags?.some(t => ['SQL', 'BigQuery', 'GA4', '資料分析', '面試'].includes(t)) },
+  { key: 'sql', label: 'SQL 分析', match: c => c.id === 'sql-interview' || c.tags?.some(t => ['SQL', 'BigQuery', 'GA4', '資料分析'].includes(t)) },
+  { key: 'coding', label: '程式面試', match: c => ['data-structures', 'algorithm-interview', 'coding-practice'].includes(c.id) },
   { key: 'ai', label: 'AI 工具', match: c => c.tags?.some(t => ['AI', 'Prompt', 'ChatGPT', 'Claude'].includes(t)) },
   { key: 'pm', label: 'PM 實務', match: c => c.tags?.some(t => ['PM', 'PRD', 'Product', 'Growth', 'AARRR'].includes(t)) },
 ];
@@ -33,7 +34,7 @@ export async function renderHome(app) {
       h('div', { class: 'hero-copy' },
         h('p', { class: 'kicker' }, '真實工作技能的互動學習平台'),
         h('h1', {}, '學到用得上的技能，', h('br'), '在瀏覽器裡直接練'),
-        h('p', { class: 'lead' }, '從 SQL、GA4、Growth、PRD 到 AI 工作術——依照你的職涯目標選一條路徑，每一課都有互動練習與即時解說。'),
+        h('p', { class: 'lead' }, '從 SQL、GA4、Growth、PRD、AI 工作術到資料結構與演算法——依照你的職涯目標選一條路徑，每一課都有互動練習與即時解說。'),
         h('div', { class: 'hero-cta' },
           h('button', { class: 'btn btn-primary btn-lg', type: 'button', onclick: () => {
             if (started) location.hash = `#/learn/${defaultCourse.id}/${next.lesson.id}`;

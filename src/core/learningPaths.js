@@ -7,6 +7,7 @@ export const LEARNING_PATHS = [
   { id: 'marketing-data', title: '行銷數據路徑', audience: '行銷、Growth、電商營運', hours: '約 24 小時', outcome: '從資料查詢、GA4 事件分析到成長與儀表板決策。', courses: ['sql-foundations', 'bigquery-ga4', 'looker-studio', 'growth-analytics'] },
   { id: 'product-pm', title: 'PM 產品路徑', audience: 'PM、產品營運、創業團隊', hours: '約 20 小時', outcome: '用數據做產品決策，並把需求寫成可執行的 PRD。', courses: ['pm-sql', 'growth-analytics', 'prd-writing', 'ai-workflow'] },
   { id: 'ai-productivity', title: 'AI 生產力路徑', audience: '行銷、PM、內容與知識工作者', hours: '約 9 小時', outcome: '建立可靠的 AI 工作流程，寫出可重複使用的 Prompt。', courses: ['ai-workflow', 'prompt-engineering'] },
+  { id: 'coding-interview', title: '程式面試路徑', audience: '程式初學者、轉職與面試準備者', hours: '約 12 小時', outcome: '理解資料結構、辨識演算法模式，並用原創題練習表達解題過程。', courses: ['data-structures', 'algorithm-interview', 'coding-practice'] },
 ];
 
 export function recommendNextCourse(catalog, statsById, { afterCourseId = null, onlyUnstarted = false } = {}) {

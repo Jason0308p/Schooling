@@ -19,12 +19,13 @@ Schooling 使用 GitHub Actions 在程式碼進入 `main` 或建立 Pull Request
 
 用 Playwright（Chromium）對本機靜態伺服器（`tools/static-server.mjs`）跑 `tests/smoke.spec.js`：
 
-- 首頁顯示 10 張課程卡，且不載入 sql.js／WASM
+- 首頁顯示 13 張課程卡，且不載入 sql.js／WASM
 - 課程搜尋
 - 非 SQL 課 MCQ 作答與回饋
 - SQL 課送出標準答案後標記已完成
 - Dashboard 與推薦區塊
 - 練習場與資料表頁可開啟
+- 三門程式面試新課的答錯／答對、首頁分類與手機版（全套共 11 項煙霧測試）
 
 任何頁面出現未捕捉的 JS 錯誤都會讓測試失敗。失敗時會上傳 trace（保留 7 天）。
 

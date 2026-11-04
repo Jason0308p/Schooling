@@ -1,6 +1,6 @@
 # Schooling 課程版圖
 
-Schooling 以「工作中能直接使用」為課程設計原則。目前共有 **10 門課、90 課、250 題、179 個課文範例**。
+Schooling 以「工作中能直接使用」為課程設計原則。目前共有 **13 門課、113 課、296 題、204 個課文範例**。
 
 ## 建議學習路徑
 
@@ -8,6 +8,8 @@ Schooling 以「工作中能直接使用」為課程設計原則。目前共有 
 - **行銷分析**：SQL 實戰分析 → BigQuery × GA4 → Looker Studio → Growth Analytics
 - **PM 能力**：PM SQL → Growth Analytics → PRD 寫作 → AI 工作術
 - **AI 生產力**：AI 工作術 → Prompt Engineering 中文實戰
+
+- **程式面試**：資料結構基礎 → 演算法與面試解題入門 → 面試題實戰：Easy 起步。先理解結構與模式，再用原創題練口述、乾跑及邊界；本站以 MCQ 檢核觀念，暫無任意程式碼批改。
 
 ## SQL 主課程：從零到能接需求
 
